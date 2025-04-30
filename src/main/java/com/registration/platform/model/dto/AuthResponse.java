@@ -13,8 +13,9 @@ public class AuthResponse {
     private String accessToken;
     @Builder.Default
     private String tokenType = "Bearer";
-    // Optional: Add user details like roles, id, email if needed on the frontend after login
-    // private Long userId;
-    // private String email;
-    // private java.util.List<String> roles;
+    // Add user details needed on the frontend after login
+    private Long userId;
+    private String email;
+    private java.util.Set<String> roles; // Use Set for roles
+
 }

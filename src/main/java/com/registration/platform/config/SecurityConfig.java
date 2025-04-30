@@ -84,6 +84,7 @@ public class SecurityConfig {
         // Configure allowed origins, methods, headers carefully for production
         // For development, allowing all might be acceptable, but restrict in production.
         configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Allow Angular dev server
+        configuration.setAllowedOrigins(List.of("http://127.0.0.1:55684")); // Allow Angular dev server
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*")); // Allow all headers
         configuration.setAllowCredentials(true); // Allow credentials

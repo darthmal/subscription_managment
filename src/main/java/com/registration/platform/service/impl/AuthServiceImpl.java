@@ -1,6 +1,7 @@
 package com.registration.platform.service.impl;
 
 import java.util.Set;
+import java.util.stream.Collectors; // Import Collectors
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional // Ensure the operation is atomic
-    public User registerUser(RegisterRequest registerRequest) {
+    public AuthResponse registerUser(RegisterRequest registerRequest) { // Change return type to AuthResponse
         log.info("Attempting to register user with email: {}", registerRequest.getEmail());
 
         // 1. Check if email already exists
@@ -77,7 +78,19 @@ public class AuthServiceImpl implements AuthService {
             log.error("Failed to send welcome email to user ID {}: {}", savedUser.getId(), e.getMessage());
         }
 
-        return savedUser;
+        // 5. Generate JWT token for the newly registered user
+        String jwt = jwtTokenProvider.generateTokenFromEmail(savedUser.getEmail());
+        log.debug("Generated JWT token for newly registered user: {}", savedUser.getEmail());
+
+        // 6. Return the token and user details in an AuthResponse DTO
+        return AuthResponse.builder()
+                .accessToken(jwt)
+                .userId(savedUser.getId())
+                .email(savedUser.getEmail())
+                .roles(savedUser.getRoles().stream()
+                       .map(role -> role.name()) // Map Role enum to String name
+                       .collect(Collectors.toSet()))
+                .build();
     }
 
     @Override
@@ -101,9 +114,17 @@ public class AuthServiceImpl implements AuthService {
         String jwt = jwtTokenProvider.generateToken(authentication);
         log.debug("Generated JWT token for user: {}", loginRequest.getEmail());
 
-        // 4. Return the token in an AuthResponse DTO
+        // 4. Get the authenticated user principal
+        User userDetails = (User) authentication.getPrincipal();
+
+        // 5. Return the token and user details in an AuthResponse DTO
         return AuthResponse.builder()
                 .accessToken(jwt)
+                .userId(userDetails.getId())
+                .email(userDetails.getEmail())
+                .roles(userDetails.getRoles().stream()
+                       .map(role -> role.name()) // Map Role enum to String name
+                       .collect(Collectors.toSet()))
                 .build();
         // AuthenticationException will be thrown by authenticationManager.authenticate()
         // if credentials are invalid, which can be handled by a global exception handler (@ControllerAdvice)

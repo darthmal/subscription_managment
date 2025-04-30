@@ -31,10 +31,21 @@ This document details the API endpoints for the Online Registration Platform bac
 **Success Response:**
 
 *   **Code:** `201 Created`
-*   **Body:**
+*   **Body:** The `AuthResponseDTO` containing the JWT and user details.
     ```json
-    "User registered successfully!"
+    {
+      "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTcxNDA...",
+      "tokenType": "Bearer",
+      "userId": 15, // Example user ID
+      "email": "john.doe@example.com",
+      "roles": ["ROLE_APPLICANT"] // Example roles
+    }
     ```
+    *   `accessToken` (String): The JWT access token.
+    *   `tokenType` (String): The token type (always "Bearer").
+    *   `userId` (Long): The ID of the registered user.
+    *   `email` (String): The email address of the registered user.
+    *   `roles` (Array of String): A list of roles assigned to the user (e.g., "ROLE_APPLICANT", "ROLE_ADMIN").
 
 **Error Responses:**
 
@@ -68,15 +79,21 @@ This document details the API endpoints for the Online Registration Platform bac
 **Success Response:**
 
 *   **Code:** `200 OK`
-*   **Body:**
+*   **Body:** The `AuthResponseDTO` containing the JWT and user details.
     ```json
     {
-      "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTcxNDA...",
-      "tokenType": "Bearer"
+      "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImi...",
+      "tokenType": "Bearer",
+      "userId": 15, // Example user ID
+      "email": "john.doe@example.com",
+      "roles": ["ROLE_APPLICANT"] // Example roles
     }
     ```
     *   `accessToken` (String): The JWT access token.
     *   `tokenType` (String): The token type (always "Bearer").
+    *   `userId` (Long): The ID of the authenticated user.
+    *   `email` (String): The email address of the authenticated user.
+    *   `roles` (Array of String): A list of roles assigned to the user.
 
 **Error Responses:**
 
