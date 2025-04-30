@@ -1,0 +1,317 @@
+<div class="w-full">
+  <!-- Stepper -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div *ngFor="let step of steps; let i = index" class="flex-1 relative">
+        <!-- Step Circle -->
+        <div 
+          class="w-10 h-10 rounded-full flex items-center justify-center mx-auto cursor-pointer"
+          [ngClass]="{
+            'bg-primary-600 text-white': step.active,
+            'bg-primary-100 text-primary-600': !step.active && !step.completed,
+            'bg-green-500 text-white': step.completed
+          }"
+          (click)="setStep(step.id)">
+          <span *ngIf="!step.completed">{{ step.id }}</span>
+          <svg *ngIf="step.completed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        
+        <!-- Step Name -->
+        <div class="text-xs text-center mt-2">{{ step.name }}</div>
+        
+        <!-- Connector Line -->
+        <div *ngIf="i < steps.length - 1" class="absolute top-5 left-1/2 w-full h-0.5"
+          [ngClass]="{
+            'bg-primary-600': step.completed,
+            'bg-gray-300': !step.completed
+          }">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step Content -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <!-- Step 1: Personal Information -->
+    <div *ngIf="currentStep === 1">
+      <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
+      <form class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
+            <input type="text" id="lastName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+          </div>
+          
+          <div class="space-y-2">
+            <label for="firstName" class="block text-sm font-medium text-gray-700">First Name(s)</label>
+            <input type="text" id="firstName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+          </div>
+        </div>
+        
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700">Gender</label>
+          <div class="flex space-x-4">
+            <label class="inline-flex items-center">
+              <input type="radio" name="gender" value="MALE" class="h-4 w-4 text-primary-600 focus:ring-primary-500">
+              <span class="ml-2">Male</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="gender" value="FEMALE" class="h-4 w-4 text-primary-600 focus:ring-primary-500">
+              <span class="ml-2">Female</span>
+            </label>
+            <label class="inline-flex items-center">
+              <input type="radio" name="gender" value="NON_BINARY" class="h-4 w-4 text-primary-600 focus:ring-primary-500">
+              <span class="ml-2">Non-binary</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="space-y-2">
+          <label for="dateOfBirth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+          <input type="date" id="dateOfBirth" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+        </div>
+        
+        <div class="space-y-2">
+          <label for="nationality" class="block text-sm font-medium text-gray-700">Nationality</label>
+          <select id="nationality" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option value="">Select nationality</option>
+            <option value="US">United States</option>
+            <option value="UK">United Kingdom</option>
+            <option value="CA">Canada</option>
+            <option value="AU">Australia</option>
+            <!-- More options would be added here -->
+          </select>
+        </div>
+        
+        <div class="space-y-2">
+          <label for="idDocumentType" class="block text-sm font-medium text-gray-700">ID Document Type</label>
+          <select id="idDocumentType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option value="">Select document type</option>
+            <option value="NATIONAL_ID_CARD">National ID Card</option>
+            <option value="PASSPORT">Passport</option>
+            <option value="BIRTH_CERTIFICATE">Birth Certificate</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Step 2: Documents -->
+    <div *ngIf="currentStep === 2">
+      <h2 class="text-xl font-semibold mb-4">Official Documents</h2>
+      <div class="space-y-6">
+        <div class="border border-gray-200 rounded-md p-4">
+          <h3 class="font-medium mb-2">High School Diploma / Baccalaureate</h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">PDF, max 5MB</p>
+              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: diploma.pdf</p>
+            </div>
+            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
+              Upload
+              <input type="file" class="hidden" accept=".pdf">
+            </label>
+          </div>
+        </div>
+        
+        <div class="border border-gray-200 rounded-md p-4">
+          <h3 class="font-medium mb-2">National ID Card (Front)</h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">JPG/PNG, max 2MB</p>
+              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: id_front.jpg</p>
+            </div>
+            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
+              Upload
+              <input type="file" class="hidden" accept=".jpg,.jpeg,.png">
+            </label>
+          </div>
+        </div>
+        
+        <div class="border border-gray-200 rounded-md p-4">
+          <h3 class="font-medium mb-2">National ID Card (Back)</h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">JPG/PNG, max 2MB</p>
+              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: id_back.jpg</p>
+            </div>
+            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
+              Upload
+              <input type="file" class="hidden" accept=".jpg,.jpeg,.png">
+            </label>
+          </div>
+        </div>
+        
+        <div class="border border-gray-200 rounded-md p-4">
+          <h3 class="font-medium mb-2">ID Photo</h3>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm text-gray-500">JPG/PNG, 3.5x4.5cm ratio, max 1MB</p>
+              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: photo.jpg</p>
+            </div>
+            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
+              Upload
+              <input type="file" class="hidden" accept=".jpg,.jpeg,.png">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Step 3: Academic History -->
+    <div *ngIf="currentStep === 3">
+      <h2 class="text-xl font-semibold mb-4">Academic Background</h2>
+      <div class="space-y-6">
+        <div class="border border-gray-200 rounded-md p-4">
+          <h3 class="font-medium mb-4">Last Attended Institution</h3>
+          <form class="space-y-4">
+            <div class="space-y-2">
+              <label for="institutionName" class="block text-sm font-medium text-gray-700">Institution Name</label>
+              <input type="text" id="institutionName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <div class="space-y-2">
+              <label for="specialization" class="block text-sm font-medium text-gray-700">Major/Specialization</label>
+              <input type="text" id="specialization" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
+                <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              </div>
+              
+              <div class="space-y-2">
+                <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
+                <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              </div>
+            </div>
+            
+            <button type="button" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md">
+              Add Institution
+            </button>
+          </form>
+        </div>
+        
+        <!-- List of added institutions would go here -->
+        <div *ngIf="false" class="border border-gray-200 rounded-md p-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <h4 class="font-medium">Example University</h4>
+              <p class="text-sm text-gray-600">Computer Science</p>
+              <p class="text-sm text-gray-500">2018-09-01 to 2022-06-30</p>
+            </div>
+            <div class="flex space-x-2">
+              <button class="p-2 text-blue-600 hover:text-blue-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+              <button class="p-2 text-red-600 hover:text-red-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Step 4: Contact Information -->
+    <div *ngIf="currentStep === 4">
+      <h2 class="text-xl font-semibold mb-4">Contact Information</h2>
+      <form class="space-y-4">
+        <div class="space-y-2">
+          <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number</label>
+          <input type="tel" id="phoneNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+        </div>
+        
+        <div class="border-t border-gray-200 pt-4 mt-4">
+          <h3 class="font-medium mb-4">Address</h3>
+          
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label for="street" class="block text-sm font-medium text-gray-700">Street</label>
+              <input type="text" id="street" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <div class="space-y-2">
+              <label for="street2" class="block text-sm font-medium text-gray-700">Apartment, suite, etc. (optional)</label>
+              <input type="text" id="street2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <label for="city" class="block text-sm font-medium text-gray-700">City</label>
+                <input type="text" id="city" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              </div>
+              
+              <div class="space-y-2">
+                <label for="postalCode" class="block text-sm font-medium text-gray-700">Postal Code</label>
+                <input type="text" id="postalCode" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              </div>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
+              <select id="country" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <option value="">Select country</option>
+                <option value="US">United States</option>
+                <option value="UK">United Kingdom</option>
+                <option value="CA">Canada</option>
+                <option value="AU">Australia</option>
+                <!-- More options would be added here -->
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <div class="border-t border-gray-200 pt-4 mt-4">
+          <h3 class="font-medium mb-4">Emergency Contact</h3>
+          
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <label for="emergencyName" class="block text-sm font-medium text-gray-700">Full Name</label>
+              <input type="text" id="emergencyName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <div class="space-y-2">
+              <label for="emergencyRelationship" class="block text-sm font-medium text-gray-700">Relationship</label>
+              <input type="text" id="emergencyRelationship" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            
+            <div class="space-y-2">
+              <label for="emergencyPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
+              <input type="tel" id="emergencyPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Navigation Buttons -->
+  <div class="flex justify-between">
+    <button 
+      *ngIf="currentStep > 1"
+      (click)="prevStep()" 
+      class="px-4 py-2 border border-primary-600 text-primary-600 hover:bg-primary-50 rounded-md transition-colors">
+      Previous
+    </button>
+    <div *ngIf="currentStep === 1"></div>
+    
+    <button 
+      *ngIf="currentStep < totalSteps"
+      (click)="nextStep()" 
+      class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors">
+      Next
+    </button>
+    <button 
+      *ngIf="currentStep === totalSteps"
+      class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">
+      Submit Application
+    </button>
+  </div>
+</div>

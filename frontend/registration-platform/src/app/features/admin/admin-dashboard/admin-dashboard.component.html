@@ -1,0 +1,101 @@
+<div class="w-full">
+  <h1 class="text-2xl font-bold mb-6">Admin Dashboard</h1>
+  
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-primary-500">
+      <h3 class="text-sm font-medium text-gray-500">Total Applications</h3>
+      <p class="text-2xl font-bold">{{ statistics.totalApplications }}</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
+      <h3 class="text-sm font-medium text-gray-500">Pending Review</h3>
+      <p class="text-2xl font-bold">{{ statistics.pendingReview }}</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
+      <h3 class="text-sm font-medium text-gray-500">Approved</h3>
+      <p class="text-2xl font-bold">{{ statistics.approved }}</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
+      <h3 class="text-sm font-medium text-gray-500">Rejected</h3>
+      <p class="text-2xl font-bold">{{ statistics.rejected }}</p>
+    </div>
+  </div>
+  
+  <!-- Completion Rate Card -->
+  <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold">Application Completion Rate</h2>
+      <span class="text-sm text-gray-500">Last 30 days</span>
+    </div>
+    
+    <div class="flex items-center">
+      <div class="w-full bg-gray-200 rounded-full h-4 mr-4">
+        <div class="bg-primary-600 h-4 rounded-full" [style.width.%]="statistics.completionRate"></div>
+      </div>
+      <span class="text-lg font-semibold">{{ statistics.completionRate }}%</span>
+    </div>
+  </div>
+  
+  <!-- Recent Applications Table -->
+  <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-8">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-lg font-semibold">Recent Applications</h2>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submitted</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let application of recentApplications">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ application.id }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ application.name }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ application.email }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [ngClass]="getStatusClass(application.status)">
+                {{ application.status }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ application.submittedAt | date:'medium' }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              <a href="#" class="text-primary-600 hover:text-primary-900 mr-3">View</a>
+              <a href="#" class="text-primary-600 hover:text-primary-900">Process</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="px-6 py-3 border-t border-gray-200 bg-gray-50 text-right">
+      <a href="#" class="text-sm font-medium text-primary-600 hover:text-primary-900">View All Applications →</a>
+    </div>
+  </div>
+  
+  <!-- Document Validation Heatmap -->
+  <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold">Document Validation Heatmap</h2>
+      <span class="text-sm text-gray-500">Last 7 days</span>
+    </div>
+    
+    <div class="grid grid-cols-7 gap-2">
+      <div *ngFor="let _ of [1,2,3,4,5,6,7]" class="h-24 bg-primary-100 rounded-md flex items-center justify-center">
+        <div class="text-center">
+          <div class="text-xs text-gray-500">{{ _ }} Apr</div>
+          <div class="text-lg font-semibold text-primary-700">{{ _ * 5 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
