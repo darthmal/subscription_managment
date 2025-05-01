@@ -10,6 +10,7 @@ import com.registration.platform.model.dto.ApplicationDetailDTO;
 import com.registration.platform.model.dto.DocumentDTO; // Import DocumentDTO
 import com.registration.platform.model.dto.DocumentStatusUpdateDTO; // Import Status DTO
 import com.registration.platform.model.dto.UserSummaryDTO;
+import com.registration.platform.model.entity.ApplicationStatus; // Import ApplicationStatus enum
 
 public interface AdminService {
 
@@ -53,5 +54,44 @@ public interface AdminService {
 
     // We will add methods later for:
     // - Exporting data
-    // - Viewing dashboard statistics
+
+    /**
+     * Calculates the application completion rate (percentage of APPROVED users in the last 30 days).
+     *
+     * @return The completion rate as a double (e.g., 75.5 for 75.5%).
+     */
+    double getApplicationCompletionRateLast30Days();
+
+    /**
+     * Gets the total count of applications (users with the APPLICANT role).
+     *
+     * @return The total number of applicant users.
+     */
+    long getTotalApplicationsCount();
+
+    /**
+     * Gets the count of applications with PENDING status.
+     *
+     * @return The number of pending applications.
+     */
+    long getPendingApplicationsCount();
+
+    /**
+     * Gets the count of applications with REJECTED status.
+     *
+     * @return The number of rejected applications.
+     */
+    long getRejectedApplicationsCount();
+
+
+    /**
+     * Updates the application status for a specific user.
+     *
+     * @param userId The ID of the user whose status is to be updated.
+     * @param newStatus The new application status.
+     * @return The updated UserSummaryDTO.
+     * @throws com.registration.platform.exception.ResourceNotFoundException if the user is not found.
+     * @throws IllegalArgumentException if the status transition is invalid (if rules are implemented).
+     */
+    UserSummaryDTO updateUserApplicationStatus(Long userId, ApplicationStatus newStatus);
 }

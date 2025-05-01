@@ -2,6 +2,7 @@ package com.registration.platform.config;
 
 import java.util.Set;
 
+import com.registration.platform.model.entity.ApplicationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,7 @@ public class AdminUserInitializer implements CommandLineRunner {
                 .provider(AuthProvider.LOCAL)
                 .enabled(true)
                 .locked(false)
+                .applicationStatus(ApplicationStatus.ACTIVE)
                 .build();
 
         userRepository.save(adminUser);

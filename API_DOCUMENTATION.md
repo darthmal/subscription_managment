@@ -108,6 +108,302 @@ This document details the API endpoints for the Online Registration Platform bac
     *   **Body:** Contains a generic error message.
 
 ---
+## Admin Area (`/api/admin`)
+
+Endpoints in this section require the user to be authenticated with a valid JWT token and possess the `ROLE_ADMIN`.
+
+### User Management (`/api/admin/users`)
+
+#### 1. List Users (Paginated)
+
+*   **Method:** `GET`
+*   **Path:** `/api/admin/users`
+*   **Description:** Retrieves a paginated list of registered users with summary information. Supports pagination and sorting via query parameters.
+*   **Authentication:** Required (Admin Role).
+*   **Query Parameters (Optional):**
+    *   `page` (integer, default: 0): The page number to retrieve (0-indexed).
+    *   `size` (integer, default: 20): The number of users per page.
+    *   `sort` (string, default: unsorted): Sorting criteria in the format `property,(asc|desc)`. Example: `sort=email,asc` or `sort=createdAt,desc`. Multiple sort criteria can be provided (e.g., `sort=lastName,asc&sort=firstName,asc`). Properties refer to fields in the `User` entity.
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** A Spring Data Page object containing `UserSummaryDTO`s.
+    ```json
+    {
+      "content": [ // Array of UserSummaryDTO objects for the current page
+        {
+          "id": 1,
+          "email": "admin@example.com",
+          "firstName": "Admin",
+          "lastName": "User",
+          "roles": ["ROLE_ADMIN", "ROLE_APPLICANT"],
+          "provider": "LOCAL",
+          "enabled": true,
+          "locked": false,
+          "createdAt": "2025-04-25T15:55:00.123456",
+          "applicationStatus": "PENDING" // Example status
+        },
+        {
+          "id": 15,
+          "email": "john.doe@example.com",
+          "firstName": "John",
+          "lastName": "Doe",
+          "roles": ["ROLE_APPLICANT"],
+          "provider": "LOCAL",
+          "enabled": true,
+          "locked": false,
+          "createdAt": "2025-04-25T10:12:00.987654",
+          "applicationStatus": "PENDING" // Example status
+        }
+        // ... other users on the current page
+      ],
+      "pageable": { // Information about the requested page
+        "pageNumber": 0,
+        "pageSize": 20,
+        "sort": {
+          "empty": true,
+          "sorted": false,
+          "unsorted": true
+        },
+        "offset": 0,
+        "paged": true,
+        "unpaged": false
+      },
+      "last": true, // Is this the last page?
+      "totalPages": 1, // Total number of pages available
+      "totalElements": 2, // Total number of users matching the query
+      "size": 20, // The requested page size
+      "number": 0, // The current page number (0-indexed)
+      "sort": { // Information about the applied sorting
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "first": true, // Is this the first page?
+      "numberOfElements": 2, // Number of users on the current page
+      "empty": false // Is the current page empty?
+      }
+    ```
+
+**Error Responses:**
+
+*   **Code:** `401 Unauthorized` - If the JWT token is missing, invalid, or expired.
+*   **Code:** `403 Forbidden` - If the authenticated user does not have the `ROLE_ADMIN`.
+*   **Code:** `500 Internal Server Error` - For unexpected server errors.
+
+#### 2. Get Application Details
+
+*   **Method:** `GET`
+*   **Path:** `/api/admin/users/{userId}/application`
+*   **Description:** Retrieves the complete application details for a specific user, including personal info, contact info, academic history, and uploaded documents.
+*   **Authentication:** Required (Admin Role).
+*   **Path Variable:**
+    *   `userId` (Long, required): The ID of the user whose application details are to be retrieved.
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** The `ApplicationDetailDTO` object containing aggregated application data.
+    ```json
+    {
+      "userSummary": { // UserSummaryDTO
+        "id": 15,
+        "email": "john.doe@example.com",
+        "firstName": "John",
+        "lastName": "Doe",
+        "roles": ["ROLE_APPLICANT"],
+        "provider": "LOCAL",
+        "enabled": true,
+        "locked": false,
+        "createdAt": "2025-04-25T10:12:00.987654",
+        "applicationStatus": "PENDING" // Example status
+      },
+      "personalInfo": { // PersonalInfoDTO
+        "lastName": "Doe",
+        "firstNames": "John Michael",
+        "gender": "MALE",
+        "dateOfBirth": "1995-08-15",
+        "nationality": "Exampleland",
+        "idDocumentType": "NATIONAL_ID_CARD"
+      },
+      "contactInfo": { // ContactInfoDTO
+        "emailVerified": false,
+        "phoneNumber": "+1 555-123-4567",
+        "address": { // AddressDTO
+          "street": "123 Main St",
+          "street2": "Apt 4B",
+          "city": "Anytown",
+          "postalCode": "12345",
+          "country": "Exampleland",
+          "latitude": null,
+          "longitude": null
+        },
+        "emergencyContact": { // EmergencyContactDTO
+          "name": "Jane Doe",
+          "relationship": "Spouse",
+          "phone": "+1 555-987-6543"
+        }
+      },
+      "academicHistory": [ // List<AcademicHistoryDTO>
+        {
+          "id": 5,
+          "institutionName": "University of Example",
+          "specialization": "Computer Science",
+          "startDate": "2020-09-01",
+          "endDate": "2024-06-30"
+        }
+        // ... other entries
+      ],
+      "documents": [ // List<DocumentDTO>
+        {
+          "id": 123,
+          "documentType": "ID_PHOTO",
+          "originalFilename": "profile_picture.jpg",
+          "fileSize": 512000,
+          "contentType": "image/jpeg",
+          "status": "UPLOADED",
+          "uploadedAt": "2025-04-25T10:44:00.123456",
+          "validatedAt": null,
+          "validationNotes": null
+        }
+        // ... other documents
+      ]
+    }
+    ```
+
+**Error Responses:**
+
+*   **Code:** `401 Unauthorized` - If the JWT token is missing, invalid, or expired.
+*   **Code:** `403 Forbidden` - If the authenticated user does not have the `ROLE_ADMIN`.
+*   **Code:** `404 Not Found` - If no user exists with the specified `{userId}`.
+*   **Code:** `500 Internal Server Error` - For unexpected server errors.
+
+#### 3. Update User Application Status
+
+*   **Method:** `PUT`
+*   **Path:** `/api/admin/users/{userId}/status`
+*   **Description:** Updates the overall application status for a specific user (e.g., to `PENDING`, `APPROVED`, or `REJECTED`).
+*   **Authentication:** Required (Admin Role).
+*   **Path Variable:**
+    *   `userId` (Long, required): The ID of the user whose status is to be updated.
+*   **Request Body:** The new application status as a string.
+    ```json
+    "APPROVED" // Or "PENDING", "REJECTED"
+    ```
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** The updated `UserSummaryDTO` for the user.
+    ```json
+    {
+      "id": 15,
+      "email": "john.doe@example.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "roles": ["ROLE_APPLICANT"],
+      "provider": "LOCAL",
+      "enabled": true,
+      "locked": false,
+      "createdAt": "2025-04-25T10:12:00.987654",
+      "applicationStatus": "APPROVED" // Updated status
+    }
+    ```
+
+**Error Responses:**
+
+*   **Code:** `400 Bad Request`
+    *   **Body:** e.g., "New application status cannot be null.", "Invalid status transition from REJECTED to PENDING" (if transition rules are implemented).
+*   **Code:** `401 Unauthorized` - If the JWT token is missing, invalid, or expired.
+*   **Code:** `403 Forbidden` - If the authenticated user does not have the `ROLE_ADMIN`.
+*   **Code:** `404 Not Found` - If no user exists with the specified `{userId}`.
+*   **Code:** `500 Internal Server Error` - For unexpected server errors.
+
+---
+### Dashboard Statistics (`/api/admin/users/dashboard`)
+
+#### 1. Get Application Completion Rate (Last 30 Days)
+
+*   **Method:** `GET`
+*   **Path:** `/api/admin/users/dashboard/completion-rate`
+*   **Description:** Calculates and returns the percentage of applications approved within the last 30 days out of all applications processed (approved or rejected) in the same period.
+*   **Authentication:** Required (Admin Role).
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** A double representing the percentage (e.g., 75.0 for 75%).
+    ```json
+    75.0
+    ```
+
+**Error Responses:**
+
+*   **Code:** `401 Unauthorized` / `403 Forbidden`
+*   **Code:** `500 Internal Server Error`
+
+#### 2. Get Total Applications Count
+
+*   **Method:** `GET`
+*   **Path:** `/api/admin/users/dashboard/total-applications`
+*   **Description:** Returns the total count of users with the `ROLE_APPLICANT`.
+*   **Authentication:** Required (Admin Role).
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** A long integer representing the total count.
+    ```json
+    152
+    ```
+
+**Error Responses:**
+
+*   **Code:** `401 Unauthorized` / `403 Forbidden`
+*   **Code:** `500 Internal Server Error`
+
+#### 3. Get Pending Applications Count
+
+*   **Method:** `GET`
+*   **Path:** `/api/admin/users/dashboard/pending-count`
+*   **Description:** Returns the count of applicant users whose application status is `PENDING`.
+*   **Authentication:** Required (Admin Role).
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** A long integer representing the pending count.
+    ```json
+    35
+    ```
+
+**Error Responses:**
+
+*   **Code:** `401 Unauthorized` / `403 Forbidden`
+*   **Code:** `500 Internal Server Error`
+
+#### 4. Get Rejected Applications Count
+
+*   **Method:** `GET`
+*   **Path:** `/api/admin/users/dashboard/rejected-count`
+*   **Description:** Returns the count of applicant users whose application status is `REJECTED`.
+*   **Authentication:** Required (Admin Role).
+
+**Success Response:**
+
+*   **Code:** `200 OK`
+*   **Body:** A long integer representing the rejected count.
+    ```json
+    12
+    ```
+
+**Error Responses:**
+
+*   **Code:** `401 Unauthorized` / `403 Forbidden`
+*   **Code:** `500 Internal Server Error`
+
+---
 ## Applicant Area (`/api/applicant`)
 
 Endpoints in this section require the user to be authenticated with a valid JWT token (obtained via `/api/auth/login`). The token must be included in the `Authorization: Bearer <token>` header.

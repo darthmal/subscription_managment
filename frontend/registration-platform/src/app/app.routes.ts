@@ -19,8 +19,21 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
-        loadComponent: () => import('./features/admin/admin-dashboard/admin-dashboard.component').then(c => c.AdminDashboardComponent),
-        canActivate: [adminGuard]
+        canActivate: [adminGuard],
+        children: [
+          {
+            path: '',
+            loadComponent: () => import('./features/admin/admin-dashboard/admin-dashboard.component').then(c => c.AdminDashboardComponent)
+          },
+          {
+            path: 'users',
+            loadComponent: () => import('./features/admin/user-management/user-management.component').then(c => c.UserManagementComponent)
+          },
+          {
+            path: 'users/:id',
+            loadComponent: () => import('./features/admin/user-application/user-application.component').then(c => c.UserApplicationComponent)
+          }
+        ]
       }
     ]
   },

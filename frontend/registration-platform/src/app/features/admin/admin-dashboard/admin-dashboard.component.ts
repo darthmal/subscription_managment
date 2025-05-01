@@ -1,35 +1,88 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { AdminService, UserSummaryDTO, PageResponse } from '../../../core/services/admin.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-admin-dashboard',
   templateUrl: './admin-dashboard.component.html',
-  styleUrl: './admin-dashboard.component.scss',
-  imports: [CommonModule, DatePipe],
+  imports: [CommonModule, DatePipe, RouterModule],
   standalone: true
 })
 export class AdminDashboardComponent implements OnInit {
-  // Mock data for dashboard statistics
+  // Make Math available to the template
+  Math = Math;
+  currentDate = new Date();
+  // Dashboard statistics
   statistics = {
-    totalApplications: 256,
-    pendingReview: 42,
-    approved: 198,
-    rejected: 16,
-    completionRate: 78
+    totalApplications: 0,
+    pendingReview: 0,
+    approved: 0,
+    rejected: 0,
+    completionRate: 0
   };
 
-  // Mock data for recent applications
-  recentApplications = [
-    { id: 1, name: 'John Doe', email: 'john.doe@example.com', status: 'PENDING', submittedAt: '2025-04-28T10:30:00' },
-    { id: 2, name: 'Jane Smith', email: 'jane.smith@example.com', status: 'APPROVED', submittedAt: '2025-04-27T14:45:00' },
-    { id: 3, name: 'Robert Johnson', email: 'robert.j@example.com', status: 'REJECTED', submittedAt: '2025-04-26T09:15:00' },
-    { id: 4, name: 'Emily Davis', email: 'emily.d@example.com', status: 'PENDING', submittedAt: '2025-04-25T16:20:00' },
-    { id: 5, name: 'Michael Wilson', email: 'michael.w@example.com', status: 'APPROVED', submittedAt: '2025-04-24T11:10:00' }
-  ];
+  // Recent applications
+  recentApplications: UserSummaryDTO[] = [];
+  
+  // Loading states
+  loadingStatistics = false;
+  loadingApplications = false;
+  error = '';
 
-  constructor() {}
+  constructor(private adminService: AdminService) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.loadDashboardData();
+    this.loadRecentApplications();
+  }
+  
+  loadDashboardData(): void {
+    this.loadingStatistics = true;
+    
+    // Use forkJoin to make parallel API calls
+    forkJoin({
+      total: this.adminService.getTotalApplicationsCount(),
+      pending: this.adminService.getPendingApplicationsCount(),
+      approved: this.adminService.getApprovedApplicationsCount(),
+      rejected: this.adminService.getRejectedApplicationsCount(),
+      completionRate: this.adminService.getCompletionRate()
+    }).subscribe({
+      next: (data) => {
+        this.statistics = {
+          totalApplications: data.total,
+          pendingReview: data.pending,
+          approved: data.approved,
+          rejected: data.rejected,
+          completionRate: data.completionRate
+        };
+        this.loadingStatistics = false;
+      },
+      error: (err) => {
+        console.error('Error loading dashboard statistics:', err);
+        this.error = 'Failed to load dashboard statistics';
+        this.loadingStatistics = false;
+      }
+    });
+  }
+  
+  loadRecentApplications(): void {
+    this.loadingApplications = true;
+    
+    // Get the first page with 5 most recent applications
+    this.adminService.getUsers(0, 5, 'createdAt,desc').subscribe({
+      next: (response: PageResponse<UserSummaryDTO>) => {
+        this.recentApplications = response.content;
+        this.loadingApplications = false;
+      },
+      error: (err) => {
+        console.error('Error loading recent applications:', err);
+        this.error = 'Failed to load recent applications';
+        this.loadingApplications = false;
+      }
+    });
+  }
 
   getStatusClass(status: string): string {
     switch (status) {

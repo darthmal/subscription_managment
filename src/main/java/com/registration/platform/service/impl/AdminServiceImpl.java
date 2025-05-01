@@ -1,29 +1,32 @@
 package com.registration.platform.service.impl;
 
-import java.util.List; // Import exception
+import java.time.LocalDateTime; // Import exception
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors; // Import Status DTO
+import java.util.Optional; // Import Status DTO
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page; // Import DocumentStatus enum
+import org.slf4j.LoggerFactory; // Import DocumentStatus enum
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
+import org.springframework.util.StringUtils; // Import EmailService
 
-import com.registration.platform.exception.ResourceNotFoundException; // Import EmailService
+import com.registration.platform.exception.ResourceNotFoundException;
 import com.registration.platform.model.dto.ApplicationDetailDTO;
 import com.registration.platform.model.dto.DocumentDTO;
 import com.registration.platform.model.dto.DocumentStatusUpdateDTO;
-import com.registration.platform.model.dto.UserSummaryDTO;
+import com.registration.platform.model.dto.UserSummaryDTO; // Import all entities
+import com.registration.platform.model.entity.ApplicationStatus;
 import com.registration.platform.model.entity.Document;
 import com.registration.platform.model.entity.DocumentStatus;
-import com.registration.platform.model.entity.User;
-import com.registration.platform.repository.DocumentRepository; // Import StringUtils
+import com.registration.platform.model.entity.Role;
+import com.registration.platform.model.entity.User; // Import LocalDateTime
+import com.registration.platform.repository.DocumentRepository;
 import com.registration.platform.repository.UserRepository;
-import com.registration.platform.service.AdminService; // Import Map
+import com.registration.platform.service.AdminService;
 import com.registration.platform.service.EmailService;
 
 import lombok.RequiredArgsConstructor;
@@ -192,4 +195,111 @@ public class AdminServiceImpl implements AdminService {
     // NOTE: Removed duplicate mapDocumentEntityToDto method here. The one at lines 88-101 is kept.
 
     // Implementations for other admin methods will go here later
+
+    @Override
+    @Transactional
+    public UserSummaryDTO updateUserApplicationStatus(Long userId, com.registration.platform.model.entity.ApplicationStatus newStatus) {
+        log.info("Attempting to update application status for user ID: {} to {}", userId, newStatus);
+
+        if (newStatus == null) {
+            throw new IllegalArgumentException("New application status cannot be null.");
+        }
+
+        // Find the user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        // Optional: Add logic here to check for valid status transitions if needed
+        // e.g., cannot go from REJECTED back to PENDING without specific action
+        com.registration.platform.model.entity.ApplicationStatus oldStatus = user.getApplicationStatus();
+        if (oldStatus == newStatus) {
+             log.debug("Application status for user ID {} is already {}. No change needed.", userId, newStatus);
+             return UserSummaryDTO.fromUser(user); // Return current state if no change
+        }
+
+        // Update status
+        user.setApplicationStatus(newStatus);
+
+        User updatedUser = userRepository.save(user);
+        log.info("Successfully updated application status for user ID: {} from {} to {}", userId, oldStatus, updatedUser.getApplicationStatus());
+
+        // Optional: Send notification email to the user about application status change
+        // sendApplicationStatusUpdateEmail(updatedUser); // Implement this helper method
+
+        return UserSummaryDTO.fromUser(updatedUser);
+    }
+
+    // Helper method to send application status update email (Placeholder)
+    // private void sendApplicationStatusUpdateEmail(User user) {
+    //     try {
+    //         String subject = String.format("Update on your application status: %s", user.getApplicationStatus());
+    //         String templateName = "application-status-update"; // Name of the email template file
+    //
+    //         Map<String, Object> templateModel = Map.of(
+    //                 "userName", user.getFirstName(),
+    //                 "newStatus", user.getApplicationStatus().toString(),
+    //                 "applicationUrl", "http://localhost:4200/applicant/dashboard" // Replace with actual frontend URL
+    //         );
+    //
+    //         emailService.sendMessageUsingTemplate(user.getEmail(), subject, templateName, templateModel);
+    //         log.info("Application status update email queued for user ID: {}", user.getId());
+    //     } catch (Exception e) {
+    //         log.error("Failed to send application status update email for user ID {}: {}", user.getId(), e.getMessage());
+    //     }
+    // }
+
+    // --- Dashboard Statistics Methods ---
+
+    @Override
+    @Transactional(readOnly = true)
+    public double getApplicationCompletionRateLast30Days() {
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        log.debug("Calculating completion rate since: {}", thirtyDaysAgo);
+
+        // Count approved applications within the last 30 days
+        long approvedLast30Days = userRepository.countByApplicationStatusAndUpdatedAtAfter(
+                ApplicationStatus.APPROVED, thirtyDaysAgo);
+
+        // Count total applications updated (approved or rejected) in the last 30 days
+        long rejectedLast30Days = userRepository.countByApplicationStatusAndUpdatedAtAfter(
+                ApplicationStatus.REJECTED, thirtyDaysAgo);
+
+        long totalProcessedLast30Days = approvedLast30Days + rejectedLast30Days;
+
+        if (totalProcessedLast30Days == 0) {
+            log.info("No applications processed in the last 30 days.");
+            return 0.0; // Avoid division by zero
+        }
+
+        double rate = ((double) approvedLast30Days / totalProcessedLast30Days) * 100.0;
+        log.info("Application completion rate (last 30 days): {}%", String.format("%.2f", rate));
+        return rate;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getTotalApplicationsCount() {
+        // Count users with the ROLE_APPLICANT
+        long count = userRepository.countByRolesContaining(Role.ROLE_APPLICANT);
+        log.debug("Total applications count (ROLE_APPLICANT): {}", count);
+        return count;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getPendingApplicationsCount() {
+        // Count users with ROLE_APPLICANT and PENDING status
+        long count = userRepository.countByRoleAndApplicationStatus(Role.ROLE_APPLICANT, ApplicationStatus.PENDING);
+        log.debug("Pending applications count: {}", count);
+        return count;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getRejectedApplicationsCount() {
+         // Count users with ROLE_APPLICANT and REJECTED status
+        long count = userRepository.countByRoleAndApplicationStatus(Role.ROLE_APPLICANT, ApplicationStatus.REJECTED);
+        log.debug("Rejected applications count: {}", count);
+        return count;
+    }
 }

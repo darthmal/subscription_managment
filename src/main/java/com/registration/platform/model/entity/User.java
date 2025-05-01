@@ -90,6 +90,12 @@ public class User implements UserDetails {
 
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    // Add columnDefinition to set a DB-level default for existing rows
+    @Column(name = "application_status", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
+    @Builder.Default
+    private ApplicationStatus applicationStatus = ApplicationStatus.PENDING; // Default status for new Java objects
+
     // --- Relationships ---
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

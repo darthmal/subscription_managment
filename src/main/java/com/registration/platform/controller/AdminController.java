@@ -10,15 +10,16 @@ import org.springframework.web.bind.annotation.GetMapping; // Import RequestBody
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping; // Import exception
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping; // Import DocumentDTO
-import org.springframework.web.bind.annotation.RestController; // Import Status DTO
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.registration.platform.exception.ResourceNotFoundException;
-import com.registration.platform.model.dto.ApplicationDetailDTO; // Import Valid
-import com.registration.platform.model.dto.DocumentDTO;
+import com.registration.platform.exception.ResourceNotFoundException; // Import ApplicationStatus enum
+import com.registration.platform.model.dto.ApplicationDetailDTO;
+import com.registration.platform.model.dto.DocumentDTO; // Import Valid
 import com.registration.platform.model.dto.DocumentStatusUpdateDTO;
 import com.registration.platform.model.dto.UserSummaryDTO;
+import com.registration.platform.model.entity.ApplicationStatus;
 import com.registration.platform.service.AdminService;
 
 import jakarta.validation.Valid;
@@ -94,4 +95,81 @@ public class AdminController {
     // - GET /api/admin/applications -> List applications (might be different from users)
     // - GET /api/admin/dashboard/stats
     // - GET /api/admin/applications/export?format=csv
+
+    /**
+     * Admin endpoint to update a user's application status.
+     *
+     * @param userId The ID of the user whose status to update.
+     * @param newStatus The new application status (PENDING, APPROVED, REJECTED).
+     * @return The updated UserSummaryDTO.
+     */
+    @PutMapping("/{userId}/status")
+    public ResponseEntity<?> updateUserApplicationStatus(@PathVariable Long userId,
+                                                         @RequestBody ApplicationStatus newStatus) {
+        log.info("Admin request received to update application status for user ID: {} to {}", userId, newStatus);
+        try {
+            UserSummaryDTO updatedUser = adminService.updateUserApplicationStatus(userId, newStatus);
+            log.info("User ID: {} application status updated successfully to {}", userId, updatedUser.getApplicationStatus());
+            return ResponseEntity.ok(updatedUser);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Update application status failed, user ID {} not found: {}", userId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            log.warn("Update application status failed for user ID {}: {}", userId, e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage()); // Return 400 for invalid status/transitions
+        } catch (Exception e) {
+            log.error("Error updating application status for user ID {}: {}", userId, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update application status", e);
+        }
+    }
+
+    // --- Dashboard Statistics Endpoints ---
+
+    @GetMapping("/dashboard/completion-rate")
+    public ResponseEntity<Double> getCompletionRateLast30Days() {
+        log.debug("Admin request received for 30-day completion rate");
+        try {
+            double rate = adminService.getApplicationCompletionRateLast30Days();
+            return ResponseEntity.ok(rate);
+        } catch (Exception e) {
+            log.error("Error calculating completion rate: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to calculate completion rate", e);
+        }
+    }
+
+    @GetMapping("/dashboard/total-applications")
+    public ResponseEntity<Long> getTotalApplicationsCount() {
+        log.debug("Admin request received for total applications count");
+        try {
+            long count = adminService.getTotalApplicationsCount();
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            log.error("Error getting total applications count: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get total applications count", e);
+        }
+    }
+
+    @GetMapping("/dashboard/pending-count")
+    public ResponseEntity<Long> getPendingApplicationsCount() {
+        log.debug("Admin request received for pending applications count");
+        try {
+            long count = adminService.getPendingApplicationsCount();
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            log.error("Error getting pending applications count: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get pending applications count", e);
+        }
+    }
+
+    @GetMapping("/dashboard/rejected-count")
+    public ResponseEntity<Long> getRejectedApplicationsCount() {
+        log.debug("Admin request received for rejected applications count");
+        try {
+            long count = adminService.getRejectedApplicationsCount();
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            log.error("Error getting rejected applications count: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get rejected applications count", e);
+        }
+    }
 }

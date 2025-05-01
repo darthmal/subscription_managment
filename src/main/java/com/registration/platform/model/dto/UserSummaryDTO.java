@@ -4,7 +4,8 @@ import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.registration.platform.model.entity.AuthProvider;
+import com.registration.platform.model.entity.ApplicationStatus;
+import com.registration.platform.model.entity.AuthProvider; // Import ApplicationStatus
 import com.registration.platform.model.entity.Role;
 
 import lombok.AllArgsConstructor;
@@ -27,6 +28,7 @@ public class UserSummaryDTO {
     private Boolean enabled;
     private Boolean locked;
     private LocalDateTime createdAt;
+    private ApplicationStatus applicationStatus; // Add application status field
 
     // Static factory method for easy conversion from User entity
     public static UserSummaryDTO fromUser(com.registration.platform.model.entity.User user) {
@@ -43,6 +45,7 @@ public class UserSummaryDTO {
                 .enabled(user.isEnabled())
                 .locked(user.isAccountNonLocked() ? false : true) // Map isAccountNonLocked back to locked
                 .createdAt(user.getCreatedAt())
+                .applicationStatus(user.getApplicationStatus()) // Include application status
                 .build();
     }
 }
