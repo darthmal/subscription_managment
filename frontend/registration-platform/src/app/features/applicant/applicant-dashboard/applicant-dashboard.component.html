@@ -330,57 +330,150 @@
     <!-- Step 3: Academic History -->
     <div *ngIf="isCurrentStep(3)">
       <h2 class="text-xl font-semibold mb-4">Academic Background</h2>
+      
+      <!-- Loading indicator -->
+      <div *ngIf="isLoadingAcademicHistory" class="flex justify-center my-8">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+      
+      <!-- Success message -->
+      <div *ngIf="academicHistorySuccessMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+        </svg>
+        {{ academicHistorySuccessMessage }}
+      </div>
+      
+      <!-- Error message -->
+      <div *ngIf="academicHistoryErrorMessage" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        {{ academicHistoryErrorMessage }}
+      </div>
+      
       <div class="space-y-6">
-        <div class="border border-gray-200 rounded-md p-4">
-          <h3 class="font-medium mb-4">Last Attended Institution</h3>
-          <form class="space-y-4">
+        <div class="border border-gray-200 rounded-md p-6">
+          <h3 class="font-medium mb-4">{{ isEditingAcademicHistory ? 'Edit' : 'Add' }} Institution</h3>
+          <form [formGroup]="academicHistoryForm" class="space-y-4">
             <div class="space-y-2">
-              <label for="institutionName" class="block text-sm font-medium text-gray-700">Institution Name</label>
-              <input type="text" id="institutionName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="institutionName" class="block text-sm font-medium text-gray-700">Institution Name*</label>
+              <input 
+                type="text" 
+                id="institutionName" 
+                formControlName="institutionName"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': academicHistoryForm.get('institutionName')?.invalid && academicHistoryForm.get('institutionName')?.touched}"
+              >
+              <div *ngIf="academicHistoryForm.get('institutionName')?.invalid && academicHistoryForm.get('institutionName')?.touched" class="text-red-600 text-sm mt-1">
+                Institution name is required
+              </div>
             </div>
             
             <div class="space-y-2">
-              <label for="specialization" class="block text-sm font-medium text-gray-700">Major/Specialization</label>
-              <input type="text" id="specialization" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="specialization" class="block text-sm font-medium text-gray-700">Major/Specialization*</label>
+              <input 
+                type="text" 
+                id="specialization" 
+                formControlName="specialization"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': academicHistoryForm.get('specialization')?.invalid && academicHistoryForm.get('specialization')?.touched}"
+              >
+              <div *ngIf="academicHistoryForm.get('specialization')?.invalid && academicHistoryForm.get('specialization')?.touched" class="text-red-600 text-sm mt-1">
+                Specialization is required
+              </div>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-2">
-                <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
-                <input type="date" id="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date*</label>
+                <input 
+                  type="date" 
+                  id="startDate" 
+                  formControlName="startDate"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  [ngClass]="{'border-red-300': academicHistoryForm.get('startDate')?.invalid && academicHistoryForm.get('startDate')?.touched}"
+                >
+                <div *ngIf="academicHistoryForm.get('startDate')?.invalid && academicHistoryForm.get('startDate')?.touched" class="text-red-600 text-sm mt-1">
+                  Start date is required
+                </div>
               </div>
               
               <div class="space-y-2">
-                <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
-                <input type="date" id="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <label for="endDate" class="block text-sm font-medium text-gray-700">End Date <span class="text-gray-500 text-xs">(leave empty if ongoing)</span></label>
+                <input 
+                  type="date" 
+                  id="endDate" 
+                  formControlName="endDate"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
               </div>
             </div>
             
-            <button type="button" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md">
-              Add Institution
-            </button>
+            <div class="flex space-x-3">
+              <button 
+                type="button" 
+                (click)="saveAcademicHistory()" 
+                class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md flex items-center"
+                [disabled]="academicHistoryForm.invalid || isSavingAcademicHistory"
+                [ngClass]="{'opacity-50 cursor-not-allowed': academicHistoryForm.invalid || isSavingAcademicHistory}"
+              >
+                <span *ngIf="isSavingAcademicHistory" class="mr-2">
+                  <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </span>
+                {{ isEditingAcademicHistory ? 'Update' : 'Add' }} Institution
+              </button>
+              
+              <button 
+                *ngIf="isEditingAcademicHistory" 
+                type="button" 
+                (click)="resetAcademicHistoryForm()" 
+                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md"
+              >
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
         
-        <!-- List of added institutions would go here -->
-        <div *ngIf="false" class="border border-gray-200 rounded-md p-4">
-          <div class="flex justify-between items-center">
-            <div>
-              <h4 class="font-medium">Example University</h4>
-              <p class="text-sm text-gray-600">Computer Science</p>
-              <p class="text-sm text-gray-500">2018-09-01 to 2022-06-30</p>
-            </div>
-            <div class="flex space-x-2">
-              <button class="p-2 text-blue-600 hover:text-blue-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                </svg>
-              </button>
-              <button class="p-2 text-red-600 hover:text-red-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-              </button>
+        <!-- List of academic histories -->
+        <div *ngIf="!isLoadingAcademicHistory">
+          <h3 class="font-medium mb-4">Your Academic History</h3>
+          
+          <div *ngIf="academicHistories.length === 0" class="text-center py-8 text-gray-500">
+            <p>You haven't added any academic history yet.</p>
+          </div>
+          
+          <div *ngFor="let history of academicHistories" class="border border-gray-200 rounded-md p-4 mb-4">
+            <div class="flex justify-between items-center">
+              <div>
+                <h4 class="font-medium">{{ history.institutionName }}</h4>
+                <p class="text-sm text-gray-600">{{ history.specialization }}</p>
+                <p class="text-sm text-gray-500">
+                  {{ history.startDate | date:'mediumDate' }} to 
+                  {{ history.endDate ? (history.endDate | date:'mediumDate') : 'Present' }}
+                </p>
+              </div>
+              <div class="flex space-x-2">
+                <button 
+                  (click)="editAcademicHistory(history)" 
+                  class="p-2 text-blue-600 hover:text-blue-800"
+                  title="Edit"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                  </svg>
+                </button>
+                <button 
+                  (click)="deleteAcademicHistory(history.id!)" 
+                  class="p-2 text-red-600 hover:text-red-800"
+                  title="Delete"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -390,71 +483,184 @@
     <!-- Step 4: Contact Information -->
     <div *ngIf="isCurrentStep(4)">
       <h2 class="text-xl font-semibold mb-4">Contact Information</h2>
-      <form class="space-y-4">
-        <div class="space-y-2">
-          <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number</label>
-          <input type="tel" id="phoneNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+      <p class="text-gray-600 mb-6">Please provide your current contact information and emergency contact details.</p>
+      
+      <!-- Loading indicator -->
+      <div *ngIf="isLoadingContactInfo" class="flex justify-center my-8">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+      
+      <!-- Success message -->
+      <div *ngIf="contactInfoSuccessMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+        </svg>
+        {{ contactInfoSuccessMessage }}
+      </div>
+      
+      <!-- Error message -->
+      <div *ngIf="contactInfoErrorMessage" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        {{ contactInfoErrorMessage }}
+      </div>
+      
+      <form [formGroup]="contactInfoForm" *ngIf="!isLoadingContactInfo" class="space-y-8">
+        <!-- Phone Number -->
+        <div class="border border-gray-200 rounded-md p-6">
+          <h3 class="font-medium mb-4">Phone Number</h3>
+          <div class="space-y-2">
+            <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Phone Number*</label>
+            <input 
+              type="tel" 
+              id="phoneNumber" 
+              formControlName="phoneNumber"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              [ngClass]="{'border-red-300': contactInfoForm.get('phoneNumber')?.invalid && contactInfoForm.get('phoneNumber')?.touched}"
+            >
+            <div *ngIf="contactInfoForm.get('phoneNumber')?.invalid && contactInfoForm.get('phoneNumber')?.touched" class="text-red-600 text-sm mt-1">
+              Phone number is required
+            </div>
+          </div>
         </div>
         
-        <div class="border-t border-gray-200 pt-4 mt-4">
-          <h3 class="font-medium mb-4">Address</h3>
-          
+        <!-- Address -->
+        <div class="border border-gray-200 rounded-md p-6" formGroupName="address">
+          <h3 class="font-medium mb-4">Current Address</h3>
           <div class="space-y-4">
             <div class="space-y-2">
-              <label for="street" class="block text-sm font-medium text-gray-700">Street</label>
-              <input type="text" id="street" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="street" class="block text-sm font-medium text-gray-700">Street Address*</label>
+              <input 
+                type="text" 
+                id="street" 
+                formControlName="street"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': contactInfoForm.get('address.street')?.invalid && contactInfoForm.get('address.street')?.touched}"
+              >
+              <div *ngIf="contactInfoForm.get('address.street')?.invalid && contactInfoForm.get('address.street')?.touched" class="text-red-600 text-sm mt-1">
+                Street address is required
+              </div>
             </div>
             
             <div class="space-y-2">
-              <label for="street2" class="block text-sm font-medium text-gray-700">Apartment, suite, etc. (optional)</label>
-              <input type="text" id="street2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="street2" class="block text-sm font-medium text-gray-700">Apartment, suite, etc. <span class="text-gray-500 text-xs">(optional)</span></label>
+              <input 
+                type="text" 
+                id="street2" 
+                formControlName="street2"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div class="space-y-2">
-                <label for="city" class="block text-sm font-medium text-gray-700">City</label>
-                <input type="text" id="city" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <label for="city" class="block text-sm font-medium text-gray-700">City*</label>
+                <input 
+                  type="text" 
+                  id="city" 
+                  formControlName="city"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  [ngClass]="{'border-red-300': contactInfoForm.get('address.city')?.invalid && contactInfoForm.get('address.city')?.touched}"
+                >
+                <div *ngIf="contactInfoForm.get('address.city')?.invalid && contactInfoForm.get('address.city')?.touched" class="text-red-600 text-sm mt-1">
+                  City is required
+                </div>
               </div>
               
               <div class="space-y-2">
-                <label for="postalCode" class="block text-sm font-medium text-gray-700">Postal Code</label>
-                <input type="text" id="postalCode" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <label for="postalCode" class="block text-sm font-medium text-gray-700">Postal Code*</label>
+                <input 
+                  type="text" 
+                  id="postalCode" 
+                  formControlName="postalCode"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  [ngClass]="{'border-red-300': contactInfoForm.get('address.postalCode')?.invalid && contactInfoForm.get('address.postalCode')?.touched}"
+                >
+                <div *ngIf="contactInfoForm.get('address.postalCode')?.invalid && contactInfoForm.get('address.postalCode')?.touched" class="text-red-600 text-sm mt-1">
+                  Postal code is required
+                </div>
               </div>
             </div>
             
             <div class="space-y-2">
-              <label for="country" class="block text-sm font-medium text-gray-700">Country</label>
-              <select id="country" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
-                <option value="">Select country</option>
-                <option value="US">United States</option>
-                <option value="UK">United Kingdom</option>
-                <option value="CA">Canada</option>
-                <option value="AU">Australia</option>
-                <!-- More options would be added here -->
-              </select>
+              <label for="country" class="block text-sm font-medium text-gray-700">Country*</label>
+              <input 
+                type="text" 
+                id="country" 
+                formControlName="country"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': contactInfoForm.get('address.country')?.invalid && contactInfoForm.get('address.country')?.touched}"
+              >
+              <div *ngIf="contactInfoForm.get('address.country')?.invalid && contactInfoForm.get('address.country')?.touched" class="text-red-600 text-sm mt-1">
+                Country is required
+              </div>
             </div>
           </div>
         </div>
         
-        <div class="border-t border-gray-200 pt-4 mt-4">
+        <!-- Emergency Contact -->
+        <div class="border border-gray-200 rounded-md p-6" formGroupName="emergencyContact">
           <h3 class="font-medium mb-4">Emergency Contact</h3>
-          
           <div class="space-y-4">
             <div class="space-y-2">
-              <label for="emergencyName" class="block text-sm font-medium text-gray-700">Full Name</label>
-              <input type="text" id="emergencyName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="contactName" class="block text-sm font-medium text-gray-700">Contact Name*</label>
+              <input 
+                type="text" 
+                id="contactName" 
+                formControlName="name"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': contactInfoForm.get('emergencyContact.name')?.invalid && contactInfoForm.get('emergencyContact.name')?.touched}"
+              >
+              <div *ngIf="contactInfoForm.get('emergencyContact.name')?.invalid && contactInfoForm.get('emergencyContact.name')?.touched" class="text-red-600 text-sm mt-1">
+                Contact name is required
+              </div>
             </div>
             
             <div class="space-y-2">
-              <label for="emergencyRelationship" class="block text-sm font-medium text-gray-700">Relationship</label>
-              <input type="text" id="emergencyRelationship" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="relationship" class="block text-sm font-medium text-gray-700">Relationship*</label>
+              <input 
+                type="text" 
+                id="relationship" 
+                formControlName="relationship"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': contactInfoForm.get('emergencyContact.relationship')?.invalid && contactInfoForm.get('emergencyContact.relationship')?.touched}"
+              >
+              <div *ngIf="contactInfoForm.get('emergencyContact.relationship')?.invalid && contactInfoForm.get('emergencyContact.relationship')?.touched" class="text-red-600 text-sm mt-1">
+                Relationship is required
+              </div>
             </div>
             
             <div class="space-y-2">
-              <label for="emergencyPhone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-              <input type="tel" id="emergencyPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <label for="contactPhone" class="block text-sm font-medium text-gray-700">Phone Number*</label>
+              <input 
+                type="tel" 
+                id="contactPhone" 
+                formControlName="phone"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                [ngClass]="{'border-red-300': contactInfoForm.get('emergencyContact.phone')?.invalid && contactInfoForm.get('emergencyContact.phone')?.touched}"
+              >
+              <div *ngIf="contactInfoForm.get('emergencyContact.phone')?.invalid && contactInfoForm.get('emergencyContact.phone')?.touched" class="text-red-600 text-sm mt-1">
+                Phone number is required
+              </div>
             </div>
           </div>
+        </div>
+        
+        <!-- Save Button -->
+        <div class="flex justify-center">
+          <button 
+            type="button" 
+            (click)="saveContactInfo()" 
+            class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-md flex items-center"
+            [disabled]="contactInfoForm.invalid || isSavingContactInfo"
+            [ngClass]="{'opacity-50 cursor-not-allowed': contactInfoForm.invalid || isSavingContactInfo}"
+          >
+            <span *ngIf="isSavingContactInfo" class="mr-2">
+              <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </span>
+            Save Contact Information
+          </button>
         </div>
       </form>
     </div>

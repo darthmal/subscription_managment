@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PersonalInfoService, PersonalInfo } from '../../../core/services/personal-info.service';
 import { DocumentService, Document, DocumentType } from '../../../core/services/document.service';
+import { AcademicHistoryService, AcademicHistory } from '../../../core/services/academic-history.service';
+import { ContactInfoService, ContactInfo } from '../../../core/services/contact-info.service';
 
 @Component({
   selector: 'app-applicant-dashboard',
@@ -64,14 +66,35 @@ export class ApplicantDashboardComponent implements OnInit {
     { value: DocumentType.OTHER, label: 'Other Document', description: 'Any other relevant document (PDF, max 5MB)', allowedTypes: ['application/pdf'], maxSize: 5 * 1024 * 1024 }
   ];
 
+  // Academic History
+  academicHistoryForm!: FormGroup;
+  academicHistories: AcademicHistory[] = [];
+  isLoadingAcademicHistory = false;
+  isSavingAcademicHistory = false;
+  isEditingAcademicHistory = false;
+  editingAcademicHistoryId?: number;
+  academicHistoryErrorMessage = '';
+  academicHistorySuccessMessage = '';
+
+  // Contact Information
+  contactInfoForm!: FormGroup;
+  isLoadingContactInfo = false;
+  isSavingContactInfo = false;
+  contactInfoErrorMessage = '';
+  contactInfoSuccessMessage = '';
+
   constructor(
     private formBuilder: FormBuilder,
     private personalInfoService: PersonalInfoService,
-    private documentService: DocumentService
+    private documentService: DocumentService,
+    private academicHistoryService: AcademicHistoryService,
+    private contactInfoService: ContactInfoService
   ) {}
 
   ngOnInit(): void {
     this.initPersonalInfoForm();
+    this.initAcademicHistoryForm();
+    this.initContactInfoForm();
     this.loadPersonalInfo();
     this.loadDocuments();
   }
@@ -174,9 +197,13 @@ export class ApplicantDashboardComponent implements OnInit {
     this.currentStep = step;
     this.updateStepsStatus();
     
-    // Load documents when navigating to the documents step
+    // Load data based on the current step
     if (this.currentStep === 2) {
       this.loadDocuments();
+    } else if (this.currentStep === 3) {
+      this.loadAcademicHistory();
+    } else if (this.currentStep === 4) {
+      this.loadContactInfo();
     }
   }
 
@@ -201,9 +228,13 @@ export class ApplicantDashboardComponent implements OnInit {
       this.currentStep++;
       this.updateStepsStatus();
       
-      // Load documents when navigating to the documents step
+      // Load data based on the current step
       if (this.currentStep === 2) {
         this.loadDocuments();
+      } else if (this.currentStep === 3) {
+        this.loadAcademicHistory();
+      } else if (this.currentStep === 4) {
+        this.loadContactInfo();
       }
     }
   }
@@ -213,9 +244,13 @@ export class ApplicantDashboardComponent implements OnInit {
       this.currentStep--;
       this.updateStepsStatus();
       
-      // Load documents when navigating to the documents step
+      // Load data based on the current step
       if (this.currentStep === 2) {
         this.loadDocuments();
+      } else if (this.currentStep === 3) {
+        this.loadAcademicHistory();
+      } else if (this.currentStep === 4) {
+        this.loadContactInfo();
       }
     }
   }
@@ -400,5 +435,198 @@ export class ApplicantDashboardComponent implements OnInit {
   isCurrentStep(step: number): boolean {
     console.log('Current step:', this.currentStep, 'Requested step:', step);
     return this.currentStep === step;
+  }
+
+  // Academic History Methods
+  initAcademicHistoryForm(): void {
+    this.academicHistoryForm = this.formBuilder.group({
+      institutionName: ['', [Validators.required]],
+      specialization: ['', [Validators.required]],
+      startDate: ['', [Validators.required]],
+      endDate: [''],
+    });
+  }
+
+  loadAcademicHistory(): void {
+    this.isLoadingAcademicHistory = true;
+    this.academicHistoryErrorMessage = '';
+
+    this.academicHistoryService.getAcademicHistory().subscribe({
+      next: (data) => {
+        this.academicHistories = data;
+        // Mark step as completed if at least one academic history is added
+        if (data.length > 0) {
+          this.steps[2].completed = true;
+          this.updateStepsStatus();
+        }
+        this.isLoadingAcademicHistory = false;
+      },
+      error: (error) => {
+        // 404 is expected if the user hasn't saved academic history yet
+        if (error.message !== 'No academic history found') {
+          this.academicHistoryErrorMessage = error.message;
+        }
+        this.isLoadingAcademicHistory = false;
+      }
+    });
+  }
+
+  saveAcademicHistory(): void {
+    if (this.academicHistoryForm.invalid) {
+      this.academicHistoryForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingAcademicHistory = true;
+    this.academicHistoryErrorMessage = '';
+    this.academicHistorySuccessMessage = '';
+
+    const academicHistory: AcademicHistory = this.academicHistoryForm.value;
+    
+    // Format dates properly
+    if (academicHistory.startDate) {
+      academicHistory.startDate = new Date(academicHistory.startDate).toISOString().split('T')[0];
+    }
+    
+    if (academicHistory.endDate) {
+      academicHistory.endDate = new Date(academicHistory.endDate).toISOString().split('T')[0];
+    }
+
+    if (this.isEditingAcademicHistory && this.editingAcademicHistoryId) {
+      // Update existing academic history
+      this.academicHistoryService.updateAcademicHistory(this.editingAcademicHistoryId, academicHistory).subscribe({
+        next: (updatedHistory) => {
+          this.academicHistorySuccessMessage = 'Academic history updated successfully!';
+          this.loadAcademicHistory();
+          this.resetAcademicHistoryForm();
+          this.steps[2].completed = true;
+          this.updateStepsStatus();
+        },
+        error: (error) => {
+          this.academicHistoryErrorMessage = error.message;
+          this.isSavingAcademicHistory = false;
+        },
+        complete: () => {
+          this.isSavingAcademicHistory = false;
+        }
+      });
+    } else {
+      // Add new academic history
+      this.academicHistoryService.addAcademicHistory(academicHistory).subscribe({
+        next: (newHistory) => {
+          this.academicHistorySuccessMessage = 'Academic history added successfully!';
+          this.loadAcademicHistory();
+          this.resetAcademicHistoryForm();
+          this.steps[2].completed = true;
+          this.updateStepsStatus();
+        },
+        error: (error) => {
+          this.academicHistoryErrorMessage = error.message;
+          this.isSavingAcademicHistory = false;
+        },
+        complete: () => {
+          this.isSavingAcademicHistory = false;
+        }
+      });
+    }
+  }
+
+  editAcademicHistory(history: AcademicHistory): void {
+    this.isEditingAcademicHistory = true;
+    this.editingAcademicHistoryId = history.id;
+    
+    this.academicHistoryForm.patchValue({
+      institutionName: history.institutionName,
+      specialization: history.specialization,
+      startDate: history.startDate,
+      endDate: history.endDate || ''
+    });
+  }
+
+  deleteAcademicHistory(id: number): void {
+    if (confirm('Are you sure you want to delete this academic history?')) {
+      this.academicHistoryService.deleteAcademicHistory(id).subscribe({
+        next: () => {
+          this.academicHistorySuccessMessage = 'Academic history deleted successfully!';
+          this.loadAcademicHistory();
+        },
+        error: (error) => {
+          this.academicHistoryErrorMessage = error.message;
+        }
+      });
+    }
+  }
+
+  resetAcademicHistoryForm(): void {
+    this.academicHistoryForm.reset();
+    this.isEditingAcademicHistory = false;
+    this.editingAcademicHistoryId = undefined;
+  }
+
+  // Contact Information Methods
+  initContactInfoForm(): void {
+    this.contactInfoForm = this.formBuilder.group({
+      phoneNumber: ['', [Validators.required]],
+      address: this.formBuilder.group({
+        street: ['', [Validators.required]],
+        street2: [''],
+        city: ['', [Validators.required]],
+        postalCode: ['', [Validators.required]],
+        country: ['', [Validators.required]]
+      }),
+      emergencyContact: this.formBuilder.group({
+        name: ['', [Validators.required]],
+        relationship: ['', [Validators.required]],
+        phone: ['', [Validators.required]]
+      })
+    });
+  }
+
+  loadContactInfo(): void {
+    this.isLoadingContactInfo = true;
+    this.contactInfoErrorMessage = '';
+
+    this.contactInfoService.getContactInfo().subscribe({
+      next: (data) => {
+        this.contactInfoForm.patchValue(data);
+        this.steps[3].completed = true;
+        this.updateStepsStatus();
+        this.isLoadingContactInfo = false;
+      },
+      error: (error) => {
+        // 404 is expected if the user hasn't saved contact info yet
+        if (error.message !== 'No contact information found') {
+          this.contactInfoErrorMessage = error.message;
+        }
+        this.isLoadingContactInfo = false;
+      }
+    });
+  }
+
+  saveContactInfo(): void {
+    if (this.contactInfoForm.invalid) {
+      this.contactInfoForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSavingContactInfo = true;
+    this.contactInfoErrorMessage = '';
+    this.contactInfoSuccessMessage = '';
+
+    const contactInfo: ContactInfo = this.contactInfoForm.value;
+
+    this.contactInfoService.saveContactInfo(contactInfo).subscribe({
+      next: () => {
+        this.contactInfoSuccessMessage = 'Contact information saved successfully!';
+        this.steps[3].completed = true;
+        this.updateStepsStatus();
+      },
+      error: (error) => {
+        this.contactInfoErrorMessage = error.message;
+      },
+      complete: () => {
+        this.isSavingContactInfo = false;
+      }
+    });
   }
 }
