@@ -126,10 +126,10 @@ public class AdminController {
     // --- Dashboard Statistics Endpoints ---
 
     @GetMapping("/dashboard/completion-rate")
-    public ResponseEntity<Double> getCompletionRateLast30Days() {
+    public ResponseEntity<String> getCompletionRateLast30Days() { // Change return type to String
         log.debug("Admin request received for 30-day completion rate");
         try {
-            double rate = adminService.getApplicationCompletionRateLast30Days();
+            String rate = adminService.getApplicationCompletionRateLast30Days(); // Expect String
             return ResponseEntity.ok(rate);
         } catch (Exception e) {
             log.error("Error calculating completion rate: {}", e.getMessage(), e);
@@ -166,6 +166,18 @@ public class AdminController {
         log.debug("Admin request received for rejected applications count");
         try {
             long count = adminService.getRejectedApplicationsCount();
+            return ResponseEntity.ok(count);
+        } catch (Exception e) {
+            log.error("Error getting rejected applications count: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to get rejected applications count", e);
+        }
+    }
+
+    @GetMapping("/dashboard/approved-count")
+    public ResponseEntity<Long> getApprovedApplicationsCount() {
+        log.debug("Admin request received for approved applications count");
+        try {
+            long count = adminService.getApprovedApplicationsCount();
             return ResponseEntity.ok(count);
         } catch (Exception e) {
             log.error("Error getting rejected applications count: {}", e.getMessage(), e);

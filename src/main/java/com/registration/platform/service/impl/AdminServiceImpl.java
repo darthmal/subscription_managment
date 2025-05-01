@@ -252,7 +252,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional(readOnly = true)
-    public double getApplicationCompletionRateLast30Days() {
+    public String getApplicationCompletionRateLast30Days() {
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         log.debug("Calculating completion rate since: {}", thirtyDaysAgo);
 
@@ -264,16 +264,20 @@ public class AdminServiceImpl implements AdminService {
         long rejectedLast30Days = userRepository.countByApplicationStatusAndUpdatedAtAfter(
                 ApplicationStatus.REJECTED, thirtyDaysAgo);
 
-        long totalProcessedLast30Days = approvedLast30Days + rejectedLast30Days;
+        long pendingLast30Days = userRepository.countByApplicationStatusAndUpdatedAtAfter(
+                ApplicationStatus.PENDING, thirtyDaysAgo);
+
+        long totalProcessedLast30Days = approvedLast30Days + rejectedLast30Days + pendingLast30Days;
 
         if (totalProcessedLast30Days == 0) {
             log.info("No applications processed in the last 30 days.");
-            return 0.0; // Avoid division by zero
+            return "0.0"; // Avoid division by zero
         }
 
         double rate = ((double) approvedLast30Days / totalProcessedLast30Days) * 100.0;
-        log.info("Application completion rate (last 30 days): {}%", String.format("%.2f", rate));
-        return rate;
+        String formattedRate = String.format("%.2f", rate); // Format to two decimal places
+        log.info("Application completion rate (last 30 days): {}%", formattedRate);
+        return formattedRate; // Return the formatted string
     }
 
     @Override
@@ -302,4 +306,14 @@ public class AdminServiceImpl implements AdminService {
         log.debug("Rejected applications count: {}", count);
         return count;
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getApprovedApplicationsCount() {
+         // Count users with ROLE_APPLICANT and REJECTED status
+        long count = userRepository.countByRoleAndApplicationStatus(Role.ROLE_APPLICANT, ApplicationStatus.APPROVED);
+        log.debug("Rejected applications count: {}", count);
+        return count;
+    }
+
 }

@@ -58,9 +58,9 @@ public interface AdminService {
     /**
      * Calculates the application completion rate (percentage of APPROVED users in the last 30 days).
      *
-     * @return The completion rate as a double (e.g., 75.5 for 75.5%).
+     * @return The completion rate as a string formatted to two decimal places (e.g., "75.50").
      */
-    double getApplicationCompletionRateLast30Days();
+    String getApplicationCompletionRateLast30Days(); // Change return type to String
 
     /**
      * Gets the total count of applications (users with the APPLICANT role).
@@ -82,6 +82,8 @@ public interface AdminService {
      * @return The number of rejected applications.
      */
     long getRejectedApplicationsCount();
+
+    long getApprovedApplicationsCount();
 
 
     /**
