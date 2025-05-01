@@ -35,7 +35,7 @@
   <!-- Step Content -->
   <div class="bg-white rounded-lg shadow-md p-6 mb-6">
     <!-- Step 1: Personal Information -->
-    <div *ngIf="currentStep === 1">
+    <div *ngIf="isCurrentStep(1)">
       <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
       
       <!-- Loading indicator -->
@@ -168,69 +168,167 @@
     </div>
     
     <!-- Step 2: Documents -->
-    <div *ngIf="currentStep === 2">
-      <h2 class="text-xl font-semibold mb-4">Official Documents</h2>
-      <div class="space-y-6">
-        <div class="border border-gray-200 rounded-md p-4">
-          <h3 class="font-medium mb-2">High School Diploma / Baccalaureate</h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">PDF, max 5MB</p>
-              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: diploma.pdf</p>
+    <div *ngIf="isCurrentStep(2)">
+      <h2 class="text-xl font-semibold mb-4">Required Documents</h2>
+      
+      <!-- Loading indicator -->
+      <div *ngIf="isLoadingDocuments" class="flex justify-center my-8">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+      
+      <!-- Success message -->
+      <div *ngIf="documentSuccessMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+        </svg>
+        {{ documentSuccessMessage }}
+      </div>
+      
+      <!-- Error message -->
+      <div *ngIf="documentErrorMessage" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+        {{ documentErrorMessage }}
+      </div>
+      
+      <!-- Document Upload Form -->
+      <div class="border border-gray-200 rounded-md p-6 mb-6">
+        <h3 class="font-medium mb-4">Upload a New Document</h3>
+        
+        <div class="space-y-4">
+          <!-- Document Type Selection -->
+          <div class="space-y-2">
+            <label for="documentType" class="block text-sm font-medium text-gray-700">Document Type</label>
+            <select 
+              id="documentType" 
+              [(ngModel)]="selectedDocumentType"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">Select Document Type</option>
+              <option *ngFor="let docType of documentTypes" [value]="docType.value">{{ docType.label }}</option>
+            </select>
+          </div>
+          
+          <!-- Document Type Description -->
+          <div *ngIf="selectedDocumentType" class="text-sm text-gray-600 p-3 bg-gray-50 rounded border-l-4 border-blue-400">
+            <div class="font-medium text-blue-800 mb-1">Requirements:</div>
+            {{ getSelectedDocumentTypeDescription() }}
+          </div>
+          
+          <!-- File Input -->
+          <div class="space-y-2">
+            <label for="document-file" class="block text-sm font-medium text-gray-700">Select File</label>
+            <input 
+              type="file" 
+              id="document-file"
+              #documentFileInput
+              (change)="onFileSelected($event)"
+              class="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-medium
+                file:bg-primary-50 file:text-primary-700
+                hover:file:bg-primary-100"
+            >
+          </div>
+          
+          <!-- Selected File Info -->
+          <div *ngIf="selectedFile" class="p-3 border border-gray-200 rounded-md mt-2">
+            <div class="flex items-center space-x-3">
+              <!-- Preview for images -->
+              <div *ngIf="isImageFile(selectedFile)" class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
+                <img [src]="selectedFilePreview" class="w-full h-full object-cover" alt="Preview" />
+              </div>
+              
+              <!-- Icon for PDFs -->
+              <div *ngIf="!isImageFile(selectedFile)" class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center">
+                <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                </svg>
+              </div>
+              
+              <div>
+                <div class="font-medium text-gray-800">{{ selectedFile.name }}</div>
+                <div class="text-sm text-gray-600">{{ formatFileSize(selectedFile.size) }} - {{ selectedFile.type }}</div>
+              </div>
             </div>
-            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
-              Upload
-              <input type="file" class="hidden" accept=".pdf">
-            </label>
+          </div>
+          
+          <!-- Upload Button -->
+          <div class="flex justify-center mt-4">
+            <button 
+              (click)="uploadDocument()"
+              class="w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 flex items-center justify-center text-lg font-medium"
+              [disabled]="!selectedFile || !selectedDocumentType || isUploadingDocument"
+              [ngClass]="{'opacity-50 cursor-not-allowed': !selectedFile || !selectedDocumentType || isUploadingDocument}"
+            >
+              <span *ngIf="isUploadingDocument" class="mr-2">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              <svg *ngIf="!isUploadingDocument" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+              </svg>
+              {{ isUploadingDocument ? 'Uploading...' : 'Upload Document' }}
+            </button>
           </div>
         </div>
+      </div>
+
+      <!-- Document List -->
+      <div *ngIf="!isLoadingDocuments" #documentList class="document-list">
+        <h3 class="font-medium mb-4">Your Documents</h3>
         
-        <div class="border border-gray-200 rounded-md p-4">
-          <h3 class="font-medium mb-2">National ID Card (Front)</h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">JPG/PNG, max 2MB</p>
-              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: id_front.jpg</p>
-            </div>
-            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
-              Upload
-              <input type="file" class="hidden" accept=".jpg,.jpeg,.png">
-            </label>
-          </div>
+        <div *ngIf="documents.length === 0" class="text-center py-8 text-gray-500">
+          <p>You haven't uploaded any documents yet.</p>
         </div>
         
-        <div class="border border-gray-200 rounded-md p-4">
-          <h3 class="font-medium mb-2">National ID Card (Back)</h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">JPG/PNG, max 2MB</p>
-              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: id_back.jpg</p>
-            </div>
-            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
-              Upload
-              <input type="file" class="hidden" accept=".jpg,.jpeg,.png">
-            </label>
-          </div>
-        </div>
-        
-        <div class="border border-gray-200 rounded-md p-4">
-          <h3 class="font-medium mb-2">ID Photo</h3>
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">JPG/PNG, 3.5x4.5cm ratio, max 1MB</p>
-              <p *ngIf="false" class="text-sm text-green-600 mt-1">Uploaded: photo.jpg</p>
-            </div>
-            <label class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md cursor-pointer">
-              Upload
-              <input type="file" class="hidden" accept=".jpg,.jpeg,.png">
-            </label>
-          </div>
+        <div *ngIf="documents.length > 0" class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let doc of documents">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ getDocumentTypeLabel(doc.documentType) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ doc.originalFilename }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatFileSize(doc.fileSize) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [ngClass]="getDocumentStatusClass(doc.status)">
+                    {{ doc.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ doc.uploadedAt | date:'short' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button 
+                    (click)="downloadDocument(doc.id, doc.originalFilename)"
+                    class="text-primary-600 hover:text-primary-900 mr-3"
+                  >
+                    Download
+                  </button>
+                  <button 
+                    (click)="deleteDocument(doc.id)"
+                    class="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
     
     <!-- Step 3: Academic History -->
-    <div *ngIf="currentStep === 3">
+    <div *ngIf="isCurrentStep(3)">
       <h2 class="text-xl font-semibold mb-4">Academic Background</h2>
       <div class="space-y-6">
         <div class="border border-gray-200 rounded-md p-4">
@@ -290,7 +388,7 @@
     </div>
     
     <!-- Step 4: Contact Information -->
-    <div *ngIf="currentStep === 4">
+    <div *ngIf="isCurrentStep(4)">
       <h2 class="text-xl font-semibold mb-4">Contact Information</h2>
       <form class="space-y-4">
         <div class="space-y-2">

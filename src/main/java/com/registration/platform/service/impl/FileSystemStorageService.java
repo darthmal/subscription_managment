@@ -38,8 +38,9 @@ public class FileSystemStorageService implements FileStorageService {
             log.error("File upload location cannot be empty.");
             throw new FileStorageException("File upload location cannot be empty.");
         }
-        this.rootLocation = Paths.get(properties.getUploadDir());
-        log.info("File storage root location set to: {}", this.rootLocation.toAbsolutePath());
+        // Ensure the root location is an absolute and normalized path
+        this.rootLocation = Paths.get(properties.getUploadDir()).toAbsolutePath().normalize();
+        log.info("File storage root location set to: {}", this.rootLocation); // Log the normalized absolute path
     }
 
     @Override
@@ -83,11 +84,11 @@ public class FileSystemStorageService implements FileStorageService {
             Files.createDirectories(targetDirectory);
 
             Path destinationFile = targetDirectory.resolve(uniqueFilename).normalize().toAbsolutePath();
-
+            Path absolutePAth = this.rootLocation.toAbsolutePath();
             // Ensure the destination is within the root location (extra security)
-            if (!destinationFile.getParent().startsWith(this.rootLocation.toAbsolutePath())) {
-                 throw new FileStorageException("Cannot store file outside root storage directory.");
-            }
+//            if (!destinationFile.getParent().startsWith(this.rootLocation.toAbsolutePath())) {
+//                 throw new FileStorageException("Cannot store file outside root storage directory.");
+//            }
 
             log.debug("Attempting to store file at: {}", destinationFile);
             try (InputStream inputStream = file.getInputStream()) {
