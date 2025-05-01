@@ -14,6 +14,8 @@ import { ContactInfoService, ContactInfo } from '../../../core/services/contact-
   standalone: true
 })
 export class ApplicantDashboardComponent implements OnInit {
+  // Make Math available to the template
+  Math = Math;
   currentStep: number = 1;
   totalSteps: number = 4;
   
@@ -281,22 +283,28 @@ export class ApplicantDashboardComponent implements OnInit {
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length) {
+    if (input.files && input.files.length > 0) {
       this.selectedFile = input.files[0];
       
       // Create preview for image files
       if (this.isImageFile(this.selectedFile)) {
         const reader = new FileReader();
-        reader.onload = (e) => {
-          this.selectedFilePreview = e.target?.result as string;
+        reader.onload = () => {
+          this.selectedFilePreview = reader.result as string;
         };
         reader.readAsDataURL(this.selectedFile);
-      } else {
-        this.selectedFilePreview = null;
       }
     }
   }
   
+  clearSelectedFile(): void {
+    this.selectedFile = null;
+    this.selectedFilePreview = null;
+    if (this.documentFileInput) {
+      this.documentFileInput.nativeElement.value = '';
+    }
+  }
+
   isImageFile(file: File): boolean {
     return file.type.startsWith('image/');
   }

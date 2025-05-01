@@ -1,276 +1,431 @@
-<div class="w-full">
+<div class="container mx-auto px-4 py-8 animate-fade-in">
   <!-- Stepper -->
-  <div class="mb-8">
-    <div class="flex items-center justify-between">
-      <div *ngFor="let step of steps; let i = index" class="flex-1 relative">
-        <!-- Step Circle -->
-        <div 
-          class="w-10 h-10 rounded-full flex items-center justify-center mx-auto cursor-pointer"
-          [ngClass]="{
-            'bg-primary-600 text-white': step.active,
-            'bg-primary-100 text-primary-600': !step.active && !step.completed,
-            'bg-green-500 text-white': step.completed
-          }"
-          (click)="setStep(step.id)">
-          <span *ngIf="!step.completed">{{ step.id }}</span>
-          <svg *ngIf="step.completed" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-          </svg>
+  <div class="mb-12 relative overflow-hidden rounded-xl bg-white shadow-lg p-6 border border-gray-100">
+    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-100 via-primary-300 to-primary-100 opacity-50"></div>
+    
+    <div class="flex justify-between items-center relative z-10">
+      <div *ngFor="let step of steps; let i = index" 
+           class="flex flex-col items-center w-1/4 transition-all duration-300 transform hover:scale-105"
+           [ngClass]="{
+             'text-primary-600 font-semibold': currentStep === i+1, 
+             'text-gray-400': currentStep !== i+1 && !step.completed, 
+             'text-green-600': step.completed && currentStep !== i+1
+           }">
+        <div class="relative">
+          <!-- Connection line -->
+          <div *ngIf="i < steps.length - 1" class="absolute top-1/2 left-1/2 w-full h-0.5 transform -translate-y-1/2 z-0" 
+               [ngClass]="{
+                 'bg-green-500': step.completed,
+                 'bg-primary-500': currentStep === i+1 && !step.completed,
+                 'bg-gray-200': currentStep !== i+1 && !step.completed
+               }"></div>
+          
+          <!-- Step circle -->
+          <div class="w-12 h-12 rounded-full flex items-center justify-center text-white mb-3 shadow-md relative z-10 transition-all duration-300 cursor-pointer"
+               (click)="setStep(i+1)"
+               [ngClass]="{
+                 'bg-gradient-to-br from-primary-500 to-primary-700 ring-4 ring-primary-100': currentStep === i+1, 
+                 'bg-gray-300': currentStep !== i+1 && !step.completed, 
+                 'bg-gradient-to-br from-green-500 to-green-600': step.completed && currentStep !== i+1
+               }">
+            <span *ngIf="!step.completed" class="text-lg font-bold">{{ i + 1 }}</span>
+            <svg *ngIf="step.completed" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 animate-fade-in" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
         </div>
         
-        <!-- Step Name -->
-        <div class="text-xs text-center mt-2">{{ step.name }}</div>
-        
-        <!-- Connector Line -->
-        <div *ngIf="i < steps.length - 1" class="absolute top-5 left-1/2 w-full h-0.5"
-          [ngClass]="{
-            'bg-primary-600': step.completed,
-            'bg-gray-300': !step.completed
-          }">
-        </div>
+        <span class="text-center font-medium mt-1">{{ step.name }}</span>
+        <span class="text-xs text-gray-500 mt-1" *ngIf="currentStep === i+1">Current Step</span>
       </div>
+    </div>
+    
+    <!-- Progress bar -->
+    <div class="relative mt-6">
+      <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div class="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-700 ease-in-out" 
+             [style.width.%]="(currentStep - 1) / (totalSteps - 1) * 100"></div>
+      </div>
+      <div class="mt-2 text-right text-sm text-gray-500">{{ Math.round((currentStep - 1) / (totalSteps - 1) * 100) }}% Complete</div>
     </div>
   </div>
 
   <!-- Step Content -->
-  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+  <div class="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100 animate-fade-in">
     <!-- Step 1: Personal Information -->
-    <div *ngIf="isCurrentStep(1)">
-      <h2 class="text-xl font-semibold mb-4">Personal Information</h2>
+    <div *ngIf="isCurrentStep(1)" class="animate-fade-in">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 text-white rounded-lg flex items-center justify-center mr-3 shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800">Personal Information</h2>
+      </div>
       
       <!-- Loading indicator -->
-      <div *ngIf="isLoadingPersonalInfo" class="flex justify-center my-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div *ngIf="isLoadingPersonalInfo" class="flex justify-center my-12">
+        <div class="relative w-20 h-20">
+          <div class="absolute top-0 left-0 w-full h-full border-4 border-primary-100 rounded-full"></div>
+          <div class="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-primary-600 rounded-full animate-spin"></div>
+          <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary-600 font-semibold">Loading</div>
+        </div>
       </div>
       
       <!-- Success message -->
-      <div *ngIf="personalInfoSuccessMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-        {{ personalInfoSuccessMessage }}
+      <div *ngIf="personalInfoSuccessMessage" class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-6 shadow-sm animate-fade-in flex items-center">
+        <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>{{ personalInfoSuccessMessage }}</span>
       </div>
       
       <!-- Error message -->
-      <div *ngIf="personalInfoErrorMessage" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-        {{ personalInfoErrorMessage }}
+      <div *ngIf="personalInfoErrorMessage" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-sm animate-fade-in flex items-center">
+        <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>{{ personalInfoErrorMessage }}</span>
       </div>
       
-      <form [formGroup]="personalInfoForm" (ngSubmit)="savePersonalInfo()" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <label for="lastName" class="block text-sm font-medium text-gray-700">Last Name</label>
-            <input 
-              type="text" 
-              id="lastName" 
-              formControlName="lastName"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              [ngClass]="{'border-red-500': isInvalidAndTouched('lastName'), 'border-gray-300': !isInvalidAndTouched('lastName')}"
-            >
-            <div *ngIf="isInvalidAndTouched('lastName')" class="text-red-500 text-sm mt-1">
-              {{ getErrorMessage('lastName') }}
+      <form [formGroup]="personalInfoForm" *ngIf="!isLoadingPersonalInfo" (ngSubmit)="savePersonalInfo()" class="space-y-8">
+        <div class="p-6 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+          <h3 class="text-lg font-semibold mb-4 text-gray-700">Basic Details</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2 group">
+              <label for="firstNames" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">First Name*</label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="firstNames" 
+                  formControlName="firstNames"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                  [ngClass]="{'border-red-300 ring-red-100': personalInfoForm.get('firstNames')?.invalid && personalInfoForm.get('firstNames')?.touched}"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              </div>
+              <div *ngIf="personalInfoForm.get('firstNames')?.invalid && personalInfoForm.get('firstNames')?.touched" class="text-red-600 text-sm mt-1 animate-fade-in">
+                First name is required
+              </div>
             </div>
-          </div>
-          
-          <div class="space-y-2">
-            <label for="firstNames" class="block text-sm font-medium text-gray-700">First Name(s)</label>
-            <input 
-              type="text" 
-              id="firstNames" 
-              formControlName="firstNames"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              [ngClass]="{'border-red-500': isInvalidAndTouched('firstNames'), 'border-gray-300': !isInvalidAndTouched('firstNames')}"
-            >
-            <div *ngIf="isInvalidAndTouched('firstNames')" class="text-red-500 text-sm mt-1">
-              {{ getErrorMessage('firstNames') }}
-            </div>
-          </div>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <label for="gender" class="block text-sm font-medium text-gray-700">Gender</label>
-            <select 
-              id="gender" 
-              formControlName="gender"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              [ngClass]="{'border-red-500': isInvalidAndTouched('gender'), 'border-gray-300': !isInvalidAndTouched('gender')}"
-            >
-              <option value="">Select Gender</option>
-              <option *ngFor="let option of genderOptions" [value]="option.value">{{ option.label }}</option>
-            </select>
-            <div *ngIf="isInvalidAndTouched('gender')" class="text-red-500 text-sm mt-1">
-              {{ getErrorMessage('gender') }}
-            </div>
-          </div>
-          
-          <div class="space-y-2">
-            <label for="dateOfBirth" class="block text-sm font-medium text-gray-700">Date of Birth</label>
-            <input 
-              type="date" 
-              id="dateOfBirth" 
-              formControlName="dateOfBirth"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              [ngClass]="{'border-red-500': isInvalidAndTouched('dateOfBirth'), 'border-gray-300': !isInvalidAndTouched('dateOfBirth')}"
-            >
-            <div *ngIf="isInvalidAndTouched('dateOfBirth')" class="text-red-500 text-sm mt-1">
-              {{ getErrorMessage('dateOfBirth') }}
+            
+            <div class="space-y-2 group">
+              <label for="lastName" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">Last Name*</label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="lastName" 
+                  formControlName="lastName"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                  [ngClass]="{'border-red-300 ring-red-100': personalInfoForm.get('lastName')?.invalid && personalInfoForm.get('lastName')?.touched}"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              </div>
+              <div *ngIf="personalInfoForm.get('lastName')?.invalid && personalInfoForm.get('lastName')?.touched" class="text-red-600 text-sm mt-1 animate-fade-in">
+                Last name is required
+              </div>
             </div>
           </div>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-2">
-            <label for="nationality" class="block text-sm font-medium text-gray-700">Nationality</label>
-            <input 
-              type="text" 
-              id="nationality" 
-              formControlName="nationality"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              [ngClass]="{'border-red-500': isInvalidAndTouched('nationality'), 'border-gray-300': !isInvalidAndTouched('nationality')}"
-            >
-            <div *ngIf="isInvalidAndTouched('nationality')" class="text-red-500 text-sm mt-1">
-              {{ getErrorMessage('nationality') }}
+        <div class="p-6 bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+          <h3 class="text-lg font-semibold mb-4 text-gray-700">Personal Details</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2 group">
+              <label for="dateOfBirth" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">Date of Birth*</label>
+              <div class="relative">
+                <input 
+                  type="date" 
+                  id="dateOfBirth" 
+                  formControlName="dateOfBirth"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                  [ngClass]="{'border-red-300 ring-red-100': personalInfoForm.get('dateOfBirth')?.invalid && personalInfoForm.get('dateOfBirth')?.touched}"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div *ngIf="personalInfoForm.get('dateOfBirth')?.invalid && personalInfoForm.get('dateOfBirth')?.touched" class="text-red-600 text-sm mt-1 animate-fade-in">
+                Date of birth is required
+              </div>
             </div>
-          </div>
-          
-          <div class="space-y-2">
-            <label for="idDocumentType" class="block text-sm font-medium text-gray-700">ID Document Type</label>
-            <select 
-              id="idDocumentType" 
-              formControlName="idDocumentType"
-              class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              [ngClass]="{'border-red-500': isInvalidAndTouched('idDocumentType'), 'border-gray-300': !isInvalidAndTouched('idDocumentType')}"
-            >
-              <option value="">Select Document Type</option>
-              <option *ngFor="let option of idDocumentTypeOptions" [value]="option.value">{{ option.label }}</option>
-            </select>
-            <div *ngIf="isInvalidAndTouched('idDocumentType')" class="text-red-500 text-sm mt-1">
-              {{ getErrorMessage('idDocumentType') }}
+            
+            <div class="space-y-2 group">
+              <label for="gender" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">Gender*</label>
+              <div class="relative">
+                <select 
+                  id="gender" 
+                  formControlName="gender"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 appearance-none"
+                  [ngClass]="{'border-red-300 ring-red-100': personalInfoForm.get('gender')?.invalid && personalInfoForm.get('gender')?.touched}"
+                >
+                  <option value="">Select gender</option>
+                  <option value="MALE">Male</option>
+                  <option value="FEMALE">Female</option>
+                  <option value="OTHER">Other</option>
+                  <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <div *ngIf="personalInfoForm.get('gender')?.invalid && personalInfoForm.get('gender')?.touched" class="text-red-600 text-sm mt-1 animate-fade-in">
+                Gender is required
+              </div>
+            </div>
+            
+            <div class="space-y-2 group">
+              <label for="nationality" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">Nationality*</label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="nationality" 
+                  formControlName="nationality"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                  [ngClass]="{'border-red-300 ring-red-100': personalInfoForm.get('nationality')?.invalid && personalInfoForm.get('nationality')?.touched}"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                  </svg>
+                </div>
+              </div>
+              <div *ngIf="personalInfoForm.get('nationality')?.invalid && personalInfoForm.get('nationality')?.touched" class="text-red-600 text-sm mt-1 animate-fade-in">
+                Nationality is required
+              </div>
+            </div>
+            
+            <div class="space-y-2 group">
+              <label for="idNumber" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">ID Number*</label>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="idNumber" 
+                  formControlName="idNumber"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                  [ngClass]="{'border-red-300 ring-red-100': personalInfoForm.get('idNumber')?.invalid && personalInfoForm.get('idNumber')?.touched}"
+                >
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400 group-focus-within:text-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                  </svg>
+                </div>
+              </div>
+              <div *ngIf="personalInfoForm.get('idNumber')?.invalid && personalInfoForm.get('idNumber')?.touched" class="text-red-600 text-sm mt-1 animate-fade-in">
+                ID number is required
+              </div>
             </div>
           </div>
         </div>
         
-        <div class="flex justify-end">
+        <div class="pt-4 flex justify-end">
           <button 
             type="submit" 
-            class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 flex items-center"
+            class="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-lg flex items-center shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
             [disabled]="personalInfoForm.invalid || isSavingPersonalInfo"
             [ngClass]="{'opacity-50 cursor-not-allowed': personalInfoForm.invalid || isSavingPersonalInfo}"
           >
             <span *ngIf="isSavingPersonalInfo" class="mr-2">
-              <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </span>
-            {{ isSavingPersonalInfo ? 'Saving...' : 'Save & Continue' }}
+            <span>Save Personal Information</span>
+            <svg *ngIf="!isSavingPersonalInfo" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </button>
         </div>
       </form>
     </div>
     
     <!-- Step 2: Documents -->
-    <div *ngIf="isCurrentStep(2)">
-      <h2 class="text-xl font-semibold mb-4">Required Documents</h2>
+    <div *ngIf="isCurrentStep(2)" class="animate-fade-in">
+      <div class="flex items-center mb-6">
+        <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 text-white rounded-lg flex items-center justify-center mr-3 shadow-md">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800">Required Documents</h2>
+      </div>
       
       <!-- Loading indicator -->
-      <div *ngIf="isLoadingDocuments" class="flex justify-center my-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div *ngIf="isLoadingDocuments" class="flex justify-center my-12">
+        <div class="relative w-20 h-20">
+          <div class="absolute top-0 left-0 w-full h-full border-4 border-primary-100 rounded-full"></div>
+          <div class="absolute top-0 left-0 w-full h-full border-4 border-transparent border-t-primary-600 rounded-full animate-spin"></div>
+          <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary-600 font-semibold">Loading</div>
+        </div>
       </div>
       
       <!-- Success message -->
-      <div *ngIf="documentSuccessMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
-        <svg class="w-5 h-5 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+      <div *ngIf="documentSuccessMessage" class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-6 shadow-sm animate-fade-in flex items-center">
+        <svg class="w-6 h-6 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        {{ documentSuccessMessage }}
+        <span>{{ documentSuccessMessage }}</span>
       </div>
       
       <!-- Error message -->
-      <div *ngIf="documentErrorMessage" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-        {{ documentErrorMessage }}
+      <div *ngIf="documentErrorMessage" class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-sm animate-fade-in flex items-center">
+        <svg class="w-6 h-6 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>{{ documentErrorMessage }}</span>
       </div>
       
       <!-- Document Upload Form -->
-      <div class="border border-gray-200 rounded-md p-6 mb-6">
-        <h3 class="font-medium mb-4">Upload a New Document</h3>
+      <div class="bg-white rounded-xl p-6 mb-8 shadow-md border border-gray-100 transform transition-all duration-300 hover:shadow-lg">
+        <div class="flex items-center mb-5">
+          <div class="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 text-white rounded-lg flex items-center justify-center mr-3 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-800">Upload a New Document</h3>
+        </div>
         
-        <div class="space-y-4">
+        <div class="space-y-5">
           <!-- Document Type Selection -->
-          <div class="space-y-2">
-            <label for="documentType" class="block text-sm font-medium text-gray-700">Document Type</label>
-            <select 
-              id="documentType" 
-              [(ngModel)]="selectedDocumentType"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              <option value="">Select Document Type</option>
-              <option *ngFor="let docType of documentTypes" [value]="docType.value">{{ docType.label }}</option>
-            </select>
+          <div class="space-y-2 group">
+            <label for="documentType" class="block text-sm font-medium text-gray-700 group-focus-within:text-primary-600 transition-colors duration-200">Document Type</label>
+            <div class="relative">
+              <select 
+                id="documentType" 
+                [(ngModel)]="selectedDocumentType"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+              >
+                <option value="">Select Document Type</option>
+                <option *ngFor="let docType of documentTypes" [value]="docType.value">{{ docType.label }}</option>
+              </select>
+              <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
           </div>
           
           <!-- Document Type Description -->
-          <div *ngIf="selectedDocumentType" class="text-sm text-gray-600 p-3 bg-gray-50 rounded border-l-4 border-blue-400">
-            <div class="font-medium text-blue-800 mb-1">Requirements:</div>
-            {{ getSelectedDocumentTypeDescription() }}
+          <div *ngIf="selectedDocumentType" class="text-sm text-gray-600 p-4 bg-blue-50 rounded-lg border border-blue-100 shadow-sm animate-fade-in">
+            <div class="flex items-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div class="font-medium text-blue-800">Requirements:</div>
+            </div>
+            <p class="ml-7">{{ getSelectedDocumentTypeDescription() }}</p>
           </div>
           
           <!-- File Input -->
           <div class="space-y-2">
             <label for="document-file" class="block text-sm font-medium text-gray-700">Select File</label>
-            <input 
-              type="file" 
-              id="document-file"
-              #documentFileInput
-              (change)="onFileSelected($event)"
-              class="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-md file:border-0
-                file:text-sm file:font-medium
-                file:bg-primary-50 file:text-primary-700
-                hover:file:bg-primary-100"
-            >
-          </div>
-          
-          <!-- Selected File Info -->
-          <div *ngIf="selectedFile" class="p-3 border border-gray-200 rounded-md mt-2">
-            <div class="flex items-center space-x-3">
-              <!-- Preview for images -->
-              <div *ngIf="isImageFile(selectedFile)" class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md overflow-hidden">
-                <img [src]="selectedFilePreview" class="w-full h-full object-cover" alt="Preview" />
-              </div>
-              
-              <!-- Icon for PDFs -->
-              <div *ngIf="!isImageFile(selectedFile)" class="w-16 h-16 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+            <div class="relative">
+              <input 
+                type="file" 
+                id="document-file"
+                #documentFileInput
+                (change)="onFileSelected($event)"
+                class="block w-full text-sm text-gray-500 rounded-lg border border-dashed border-gray-300 cursor-pointer py-7 px-4
+                  file:mr-4 file:py-2 file:px-4
+                  file:rounded-full file:border-0
+                  file:text-sm file:font-medium
+                  file:bg-gradient-to-r file:from-primary-500 file:to-primary-600 file:text-white
+                  hover:file:bg-gradient-to-r hover:file:from-primary-400 hover:file:to-primary-500
+                  focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-300
+                  transition-all duration-200"
+              >
+              <div class="absolute inset-0 flex items-center justify-center pointer-events-none" *ngIf="!selectedFile">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-              </div>
-              
-              <div>
-                <div class="font-medium text-gray-800">{{ selectedFile.name }}</div>
-                <div class="text-sm text-gray-600">{{ formatFileSize(selectedFile.size) }} - {{ selectedFile.type }}</div>
               </div>
             </div>
           </div>
           
+          <!-- Selected File Info -->
+          <div *ngIf="selectedFile" class="p-5 bg-gray-50 border border-gray-200 rounded-lg mt-4 shadow-sm animate-fade-in">
+            <div class="flex items-center space-x-4">
+              <!-- Preview for images -->
+              <div *ngIf="isImageFile(selectedFile)" class="w-20 h-20 flex-shrink-0 bg-white rounded-lg overflow-hidden shadow-md border border-gray-100 transform transition-transform duration-300 hover:scale-105">
+                <img [src]="selectedFilePreview" class="w-full h-full object-cover" alt="Preview" />
+              </div>
+              
+              <!-- Icon for PDFs -->
+              <div *ngIf="!isImageFile(selectedFile)" class="w-20 h-20 flex-shrink-0 bg-gradient-to-br from-red-50 to-red-100 rounded-lg flex items-center justify-center shadow-md border border-red-100 transform transition-transform duration-300 hover:scale-105">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0112.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 9h1M9 13h6M9 17h6"></path>
+                </svg>
+              </div>
+              
+              <div class="flex-grow">
+                <div class="font-medium text-gray-800 text-lg">{{ selectedFile.name }}</div>
+                <div class="text-sm text-gray-500 mt-1 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                  {{ formatFileSize(selectedFile.size) }}
+                </div>
+              </div>
+              
+              <button 
+                type="button" 
+                (click)="clearSelectedFile()" 
+                class="ml-auto text-gray-400 hover:text-red-500 transition-colors duration-200 bg-white rounded-full p-2 hover:bg-red-50 shadow-sm border border-gray-100"
+                aria-label="Remove file"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
           <!-- Upload Button -->
-          <div class="flex justify-center mt-4">
+          <div class="mt-6">
             <button 
-              (click)="uploadDocument()"
-              class="w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 flex items-center justify-center text-lg font-medium"
-              [disabled]="!selectedFile || !selectedDocumentType || isUploadingDocument"
-              [ngClass]="{'opacity-50 cursor-not-allowed': !selectedFile || !selectedDocumentType || isUploadingDocument}"
+              type="button" 
+              (click)="uploadDocument()" 
+              [disabled]="!selectedFile || !selectedDocumentType || isUploadingDocument" 
+              class="w-full px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none disabled:hover:shadow-none disabled:hover:-translate-y-0 disabled:from-gray-400 disabled:to-gray-500 flex items-center justify-center"
             >
-              <span *ngIf="isUploadingDocument" class="mr-2">
-                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <span *ngIf="isUploadingDocument" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
+                <span class="font-medium">Uploading Document...</span>
               </span>
-              <svg *ngIf="!isUploadingDocument" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
-              </svg>
-              {{ isUploadingDocument ? 'Uploading...' : 'Upload Document' }}
+              <span *ngIf="!isUploadingDocument" class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span class="font-medium">Upload Document</span>
+              </span>
             </button>
+            
+            <!-- Upload Progress -->
+            <div *ngIf="isUploadingDocument && uploadProgress > 0" class="mt-4">
+              <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 overflow-hidden">
+                <div class="bg-primary-600 h-2.5 rounded-full transition-all duration-300 ease-out" [style.width.%]="uploadProgress"></div>
+              </div>
+              <div class="text-xs text-gray-500 text-right mt-1">{{ uploadProgress }}% uploaded</div>
+            </div>
           </div>
         </div>
       </div>
@@ -667,25 +822,35 @@
   </div>
   
   <!-- Navigation Buttons -->
-  <div class="flex justify-between">
+  <div class="flex justify-between mt-8 mb-4">
     <button 
       *ngIf="currentStep > 1"
       (click)="prevStep()" 
-      class="px-4 py-2 border border-primary-600 text-primary-600 hover:bg-primary-50 rounded-md transition-colors">
-      Previous
+      class="px-6 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-300 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-1 group">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      <span class="font-medium">Previous Step</span>
     </button>
-    <div *ngIf="currentStep === 1"></div>
+    <div *ngIf="currentStep === 1" class="w-32"></div>
     
     <button 
       *ngIf="currentStep < totalSteps"
       (click)="nextStep()" 
-      class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors">
-      Next
+      class="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-500 hover:to-primary-600 text-white rounded-lg transition-all duration-300 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-1 group">
+      <span class="font-medium">Next Step</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
     </button>
+    
     <button 
       *ngIf="currentStep === totalSteps"
-      class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">
-      Submit Application
+      class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white rounded-lg transition-all duration-300 flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-1 animate-pulse-slow">
+      <span class="font-medium">Submit Application</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
     </button>
   </div>
 </div>
